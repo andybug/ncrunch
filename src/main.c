@@ -1,10 +1,29 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
+#include <unistd.h>
 
 #include <openssl/sha.h>
 
 #include <ncaacrunch.h>
+
+
+
+static int _get_exe_location(char location[FILENAME_MAX])
+{
+#ifdef __linux__
+	int error;
+
+	error = readlink("/proc/self/exe", location, FILENAME_MAX);
+	if (error < 0) {
+		fprintf(stderr, "%s: Unable to read /proc/self/exe\n", __func__);
+		return -1;
+	}
+#endif
+
+	return 0;
+}
 
 
 static void show_digest(unsigned char* digest)
@@ -29,14 +48,19 @@ static void show_digest(unsigned char* digest)
 }
 
 
-int main(void)
+int main(int argc, char** argv)
 {
 	char buffer[256];
 	unsigned char digest[SHA256_DIGEST_LENGTH];
 	size_t len;
+
+	char exe_location[FILENAME_MAX];
 	
+
 	printf("ncaacrunch:\tAndrew Fields 2012\n\t\t<andybug10@gmail.com>\n");
-	printf("Version %d.%d\n", NCRUNCH_VERSION_MAJOR, NCRUNCH_VERSION_MINOR);
+
+	_get_exe_location(exe_location);
+	printf("exe location = %s\n", exe_location);
 
 	gets(buffer);
 	len = strlen(buffer);
