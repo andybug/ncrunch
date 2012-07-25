@@ -20,9 +20,64 @@ static int _get_exe_location(char location[FILENAME_MAX])
 		fprintf(stderr, "%s: Unable to read /proc/self/exe\n", __func__);
 		return -1;
 	}
-#endif
 
 	return 0;
+
+#else	/* OS not supported */
+	return -1;
+
+#endif
+}
+
+
+static int _check_installed_version(void)
+{
+	char exe_location[FILENAME_MAX];
+
+#ifdef __linux__
+	int error;
+	int release = -1;
+
+	error = _get_exe_location(exe_location);
+	if (error < 0) {
+		return -1;
+	}
+
+	if (strncmp("/usr/bin/", exe_location, 9) == 0) {	/* RELEASE */
+		release = 1;
+	}
+
+	else if (strncmp("/opt/", exe_location, 5) == 0) {	/* RELEASE */
+		release = 1;
+	}
+
+	else {							/* DEBUG */
+		release = 0;
+	}
+
+
+	/* ensure that the installed location is equivalent to the build type;
+	 * this will make sure that directory paths throughout the program will
+	 * read from the right locations (configs, etc.)
+	 */
+
+	if (release && NCRUNCH_DEV) {	/* release location but dev build */
+		fprintf(stderr, "%s: developer build running from release location\n", __func__);
+		return -2;
+	}
+
+	else if (!release && NCRUNCH_RELEASE) {	/* dev location but release build */
+		fprintf(stderr, "%s: release build running from developer location\n", __func__);
+		return -3;
+	}
+
+	/* everything's ok */
+	return 0;
+
+
+#else	/* OS not supported */
+	return -1;
+#endif
 }
 
 
@@ -50,23 +105,14 @@ static void show_digest(unsigned char* digest)
 
 int main(int argc, char** argv)
 {
-	char buffer[256];
-	unsigned char digest[SHA256_DIGEST_LENGTH];
-	size_t len;
-
-	char exe_location[FILENAME_MAX];
-	
+	int error;
 
 	printf("ncaacrunch:\tAndrew Fields 2012\n\t\t<andybug10@gmail.com>\n");
 
-	_get_exe_location(exe_location);
-	printf("exe location = %s\n", exe_location);
-
-	gets(buffer);
-	len = strlen(buffer);
-	
-	SHA256((unsigned char*) buffer, len, digest);
-	show_digest(digest);
+	error = _check_installed_version();
+	if (error < 0) {
+		return -1;
+	}
 
 	return 0;
 }
