@@ -103,11 +103,57 @@ static void show_digest(unsigned char* digest)
 }
 
 
+
+/**
+ * Handles the processing of flags and filenames passed to the program
+ * 
+ * @param argc Number of arguments, including called location (argv[0])
+ * @param argv Vector of string arguments
+ */
+
+static int _process_args(int argc, char** argv)
+{
+	int arg = 0;
+	int bExpectingParam = 0;	/* set if expecting a string after flag:
+					 * ex. -o string */
+
+	while (arg < argc) {
+		if (argv[arg][0] == '-' && bExpectingParam) {
+			fprintf(stderr, "Unknown FIXME\n");
+			return -1;
+		}
+
+		if (strncmp(argv[arg], "-v", 2) == 0) {		/* print version info */
+			if (NCRUNCH_RELEASE) {
+				int major = NCRUNCH_VERSION_MAJOR;
+				int minor = NCRUNCH_VERSION_MINOR;
+				printf("ncaacrunch v%d.%d", minor, major);
+				printf(" by Andrew Fields - 2012\n");
+			}
+			else {
+				printf("ncaacrunch: built %s %s\n", __DATE__, __TIME__);
+			}
+			return 1; /* exit program */
+		}
+
+		arg++; /* go to next argument */
+	}
+
+	return 0;
+}
+
+
 int main(int argc, char** argv)
 {
 	int error;
 
-	printf("ncaacrunch:\tAndrew Fields 2012\n\t\t<andybug10@gmail.com>\n");
+	error = _process_args(argc, argv);
+	if (error < 0) { 	/* error parsing arguments */
+		return -1;
+	}
+	else if (error > 0) {	/* exit after print out */
+		return 0;
+	}
 
 	error = _check_installed_version();
 	if (error < 0) {
