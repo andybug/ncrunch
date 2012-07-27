@@ -10,6 +10,12 @@
 
 
 
+/**
+ * Determines the full path to the executable on the system
+ *
+ * @param location The buffer to put the path into
+ */
+
 static int _get_exe_location(char location[FILENAME_MAX])
 {
 #ifdef __linux__
@@ -29,6 +35,12 @@ static int _get_exe_location(char location[FILENAME_MAX])
 #endif
 }
 
+
+
+/**
+ * Compares the executable's location to the build type to ensure that config
+ * files will be read from the correct directories
+ */
 
 static int _check_installed_version(void)
 {
