@@ -73,23 +73,41 @@ static int _check_installed_version(void)
 	 * read from the right locations (configs, etc.)
 	 */
 
-	if (release && NCRUNCH_DEV) {	/* release location but dev build */
+
+#if (NCRUNCH_DEBUG == 1)
+	if (release) {		/* release location but dev build */
 		fprintf(stderr, "%s: developer build running from release location\n", __func__);
 		return -2;
 	}
 
-	else if (!release && NCRUNCH_RELEASE) {	/* dev location but release build */
+#elif (NCRUNCH_RELEASE == 1)
+	if (!release) {		/* dev location but release build */
 		fprintf(stderr, "%s: release build running from developer location\n", __func__);
-		return -3;
+		return -2;
 	}
+
+#else
+	/* Undefined build type */
+
+	fprintf(stderr, "%s: Undefined build type\n", __func__);
+	return -3;
+
+#endif	/* end build type test */
+
 
 	/* everything's ok */
 	return 0;
 
 
-#else	/* OS not supported */
-	return -1;
-#endif
+	/********** END LINUX *****************************************/
+
+
+
+#else	
+	/* OS not supported */
+	return -4;
+
+#endif	/* end OS check */
 }
 
 
