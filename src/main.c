@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <unistd.h>
 
-#include <ncaacrunch.h>
+#include <ncrunch/ncrunch.h>
 
 
 
@@ -137,7 +137,7 @@ static int _process_args(int argc, char** argv)
 				printf(" by Andrew Fields - 2012\n");
 			}
 			else {
-				printf("ncaacrunch: built %s %s\n", __DATE__, __TIME__);
+				printf("ncaacrunch debug build: built %s %s\n", __DATE__, __TIME__);
 			}
 			return 1; /* exit program */
 		}
