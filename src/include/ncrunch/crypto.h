@@ -10,7 +10,7 @@
  */
 
 struct ncrunch_crypto_digest {
-	char md[SHA256_DIGEST_LENGTH];	
+	unsigned char md[SHA256_DIGEST_LENGTH];	
 };
 
 
