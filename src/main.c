@@ -166,6 +166,8 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
+	ncrunch_flatf_read("test.txt");
+
 	return 0;
 }
 

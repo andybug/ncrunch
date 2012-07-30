@@ -3,6 +3,6 @@ project(ncaacrunch)
 
 include_directories(include)
 
-add_executable(ncaacrunch main.c crypto.c)
+add_executable(ncaacrunch main.c crypto.c flatf.c)
 target_link_libraries(ncaacrunch ssl)
 
