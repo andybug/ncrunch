@@ -105,10 +105,67 @@ struct _flatf_token {
 
 static size_t _flatf_tokenize_line(char* buffer, struct _flatf_token** token_list)
 {
-	
+	struct _flatf_token *list = NULL;
+	struct _flatf_token *token = NULL;
+	size_t count = 0;
+	char *str;
+
+	str = strtok(buffer, "\t");
+
+	while (str) {
+		if (!list) {
+			list = malloc(sizeof(*list));
+			token = list;
+		} else {
+			token->next = malloc(sizeof(struct _flatf_token));
+			token = token->next;
+		}
+
+		token->str = str;
+		token->next = NULL;
+		count++;
+
+		str = strtok(NULL, "\t");
+	}
+
+	if (count) {
+		*token_list = list;
+	}
+
+	return count;
 }
 
+static size_t _flatf_read_fields_list(int fd, char *buf)
+{
+	size_t count;
+	struct _flatf_token *tokens, *token;
+	size_t num_tokens;
+	const char **fields; /* FIXME: this needs to be the global team fields struct! */
+	size_t i;
 
+	count = _flatf_read_line(fd, buf, FLATF_READBUFSIZE);
+	if (!count) {
+		/* no data or too much data! */
+		return 0;
+	}
+
+	num_tokens = _flatf_tokenize_line(buf, &tokens);
+	if (!num_tokens) {
+		/* not formatted correctly */
+		return 0;
+	}
+
+	
+	fields = malloc(sizeof(char*) * num_tokens);
+	token = tokens;
+
+	for (i = 0; i < num_tokens; i++) {
+		fields[i] = strdup(token->str);
+		token = token->next;
+	}
+
+	return num_tokens;	
+}
 
 /**
  *
@@ -120,14 +177,20 @@ int ncrunch_flatf_read(const char* filename)
 	char buffer[FLATF_READBUFSIZE];
 	size_t count;
 
+	struct _flatf_token *token_list;
+	size_t token_list_length;
+
 
 	fd = _flatf_open(filename);
 	if (fd < 0) {
 		return -1;
 	}
 
+	/* read heading line which contains the variable names */
+	count = _flatf_read_fields_list(fd, buffer);
+
 	count = _flatf_read_line(fd, buffer, FLATF_READBUFSIZE);
-	printf("read %d: %s\n", count, buffer);
+	token_list_length = _flatf_tokenize_line(buffer, &token_list);
 
 	_flatf_close(fd);
 
