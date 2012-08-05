@@ -52,6 +52,7 @@ struct team_field_list {
 };
 
 int team_field_list_create(size_t num_fields);
+size_t team_field_list_num_fields(void);
 int team_field_list_set_name(size_t id, const char *name);
 int team_field_list_set_type(size_t id, enum team_field_type type);
 const char *team_field_list_get_name(size_t id);

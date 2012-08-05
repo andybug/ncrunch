@@ -225,6 +225,45 @@ static size_t _flatf_read_fields_list(int fd, char *buf)
 
 
 /**
+ * Reads a line from the file and interprets it as team data.
+ *
+ * @param buf The buffer to use for reading
+ * @return The difference between the number of fields read and the number of fields
+ * in the team field list
+ */
+
+static size_t _read_team(int fd, char *buf)
+{
+	size_t count;
+	size_t toread = team_field_list_num_fields();
+	struct _flatf_token *tokens, *token;
+	size_t num_tokens;
+	size_t i;
+
+	count = _flatf_read_line(fd, buf, FLATF_READBUFSIZE);
+	if (!count) {
+		return toread;
+	}
+
+	num_tokens = _flatf_tokenize_line(buf, &tokens);
+	if (num_tokens != toread) {
+		fprintf(stderr, "%s: team only has %lu/%lu fields\n", __func__, num_tokens, toread);
+		_deallocate_tokens(&tokens);
+		return (num_tokens - toread);
+	}
+
+	token = tokens;
+	for (i = 0; i < num_tokens; i++) {
+		printf("%s: %s\n", team_field_list_get_name(i), token->str);
+		token = token->next;
+	}
+
+	_deallocate_tokens(&tokens);
+	return 0;
+}
+
+
+/**
  * Reads the flat file; The first line of the file is interpreted as the field list
  * (since the headings of the columns correspond to the data below). The team field
  * list is populated from this line. The rest of the lines are used to fill out the
@@ -239,9 +278,6 @@ int ncrunch_flatf_read(const char* filename)
 	char buffer[FLATF_READBUFSIZE];
 	size_t count;
 
-	struct _flatf_token *token_list;
-	size_t token_list_length;
-
 
 	fd = _flatf_open(filename);
 	if (fd < 0) {
@@ -251,10 +287,15 @@ int ncrunch_flatf_read(const char* filename)
 
 	/* read heading line which contains the variable names */
 	count = _flatf_read_fields_list(fd, buffer);
+	if (count == 0) {
+		return -2;
+	}
 
-	count = _flatf_read_line(fd, buffer, FLATF_READBUFSIZE);
-	token_list_length = _flatf_tokenize_line(buffer, &token_list);
-	_deallocate_tokens(&token_list);
+	count = _read_team(fd, buffer);
+	if (count) {
+		return -3;
+	}
+
 
 	_flatf_close(fd);
 

@@ -25,6 +25,11 @@ int team_field_list_create(size_t num_fields)
 	return 0;
 }
 
+size_t team_field_list_num_fields(void)
+{
+	return team_fields.num_fields;
+}
+
 int team_field_list_set_name(size_t id, const char *name)
 {
 	if (id >= team_fields.num_fields)
