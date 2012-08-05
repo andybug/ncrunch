@@ -18,8 +18,8 @@ int team_field_list_create(size_t num_fields)
 {
 	assert(team_fields.num_fields == 0);
 
-	team_fields.field_name = calloc(team_fields.num_fields, sizeof(char*));
-	team_fields.field_type = calloc(team_fields.num_fields, sizeof(char*));
+	team_fields.field_name = calloc(num_fields, sizeof(char*));
+	team_fields.field_type = calloc(num_fields, sizeof(char*));
 	team_fields.num_fields = num_fields;
 
 	return 0;
