@@ -24,18 +24,45 @@
  */
 
 
-union ncrunch_team_field {
+union team_field {
 	const char* data_s;
 	double data_f;
 };
-
 
 
 /**
  *
  */
 
-struct ncrunch_team {
+enum team_field_type {
+	TEAM_FIELD_STR,
+	TEAM_FIELD_DOUBLE,
+	TEAM_FIELD_INVALID
+};
+
+
+/**
+ *
+ */
+
+struct team_field_list {
+	const char **field_name;
+	enum team_field_type *field_type;
+	size_t num_fields;
+};
+
+int team_field_list_create(size_t num_fields);
+int team_field_list_set_name(int id, const char *name);
+int team_field_list_set_type(int id, enum team_field_type type);
+const char *team_field_list_get_name(int id);
+enum team_field_type team_field_list_get_type(int id);
+
+
+/**
+ *
+ */
+
+struct team {
 	const char* name;
 	struct ncrunch_crypto_digest name_hash;
 

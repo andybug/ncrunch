@@ -135,13 +135,17 @@ static size_t _flatf_tokenize_line(char* buffer, struct _flatf_token** token_lis
 	return count;
 }
 
+static void _deallocate_tokens(struct _flatf_token **token_list)
+{
+}
+
 static size_t _flatf_read_fields_list(int fd, char *buf)
 {
 	size_t count;
 	struct _flatf_token *tokens, *token;
 	size_t num_tokens;
-	const char **fields; /* FIXME: this needs to be the global team fields struct! */
 	size_t i;
+	char *tmp;
 
 	count = _flatf_read_line(fd, buf, FLATF_READBUFSIZE);
 	if (!count) {
@@ -156,11 +160,12 @@ static size_t _flatf_read_fields_list(int fd, char *buf)
 	}
 
 	
-	fields = malloc(sizeof(char*) * num_tokens);
+	team_field_list_create(num_tokens);
 	token = tokens;
 
 	for (i = 0; i < num_tokens; i++) {
-		fields[i] = strdup(token->str);
+		tmp = strdup(token->str);
+		team_field_list_set_name(i, tmp);
 		token = token->next;
 	}
 
