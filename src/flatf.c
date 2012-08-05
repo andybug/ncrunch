@@ -21,6 +21,8 @@
 /**
  * Opens a file and returns the file descriptor, or a negative to indicate 
  * an error.
+ *
+ * @return Negative if error
  */
 
 static int _flatf_open(const char* filename)
@@ -40,9 +42,10 @@ static int _flatf_open(const char* filename)
 }
 
 
-
 /**
  * Simply closes a file...
+ *
+ * @return Negative if error
  */
 
 static int _flatf_close(int fd)
@@ -61,12 +64,16 @@ static int _flatf_close(int fd)
 }
 
 
-
 /**
  * Reads a line from the flat file and returns the number of characters read
  * A null-terminator is added to the end of the string
+ * The max number of chars that can be read is therefore (len - 1)
  * 
  * TODO: memory map the file
+ *
+ * @param buffer The buffer that is to be read into
+ * @param len The size of the buffer
+ * @return The number of characters read into the buffer
  */
 
 static size_t _flatf_read_line(int fd, char* buffer, size_t len)
@@ -92,16 +99,34 @@ static size_t _flatf_read_line(int fd, char* buffer, size_t len)
 		}
 	}
 			
-
 	return count;
 }
 
+
+/**
+ * Token structure for breaking up lines from the file
+ * The str pointer points into the buffer - DO NOT FREE IT
+ */
 
 struct _flatf_token {
 	const char* str;	/* pointer into buffer */
 	struct _flatf_token* next;
 };
 
+
+/**
+ * Tokenizes the line contained in a buffer into a token list
+ * The token list is allocated in the function
+ * Be sure to call _deallocate_tokens() afterwords
+ *
+ * @param buffer The buffer that contains a line to be tokenized, it will be modified
+ * during the tokenization process
+ *
+ * @param token_list An unallocated token to be used as the resulting token list.
+ * The token will be allocated inside the function
+ *
+ * @return The number of characters read, not including the null terminator
+ */
 
 static size_t _flatf_tokenize_line(char* buffer, struct _flatf_token** token_list)
 {
@@ -135,9 +160,33 @@ static size_t _flatf_tokenize_line(char* buffer, struct _flatf_token** token_lis
 	return count;
 }
 
+
+/**
+ * Deallocates a token list
+ */
+
 static void _deallocate_tokens(struct _flatf_token **token_list)
 {
+	struct _flatf_token *token = *token_list;
+	struct _flatf_token *next;
+
+	while (token) {
+		next = token->next;
+		free(token);
+		token = next;
+	}
+
+	*token_list = NULL;
 }
+
+
+/**
+ * Reads the first line of the flat file and adds each heading as a field in the
+ * team fields list.
+ *
+ * @param buf The buffer to use for reading
+ * @return The number of fields added to the team field list
+ */
 
 static size_t _flatf_read_fields_list(int fd, char *buf)
 {
@@ -145,17 +194,19 @@ static size_t _flatf_read_fields_list(int fd, char *buf)
 	struct _flatf_token *tokens, *token;
 	size_t num_tokens;
 	size_t i;
-	char *tmp;
 
 	count = _flatf_read_line(fd, buf, FLATF_READBUFSIZE);
 	if (!count) {
 		/* no data or too much data! */
+		fprintf(stderr, "%s: failed to read fields line\n", __func__);
 		return 0;
 	}
 
 	num_tokens = _flatf_tokenize_line(buf, &tokens);
 	if (!num_tokens) {
 		/* not formatted correctly */
+		fprintf(stderr, "%s: fields line incorrectly formatted\n", __func__);
+		_deallocate_tokens(&tokens);
 		return 0;
 	}
 
@@ -164,16 +215,22 @@ static size_t _flatf_read_fields_list(int fd, char *buf)
 	token = tokens;
 
 	for (i = 0; i < num_tokens; i++) {
-		tmp = strdup(token->str);
-		team_field_list_set_name(i, tmp);
+		team_field_list_set_name(i, token->str);
 		token = token->next;
 	}
 
+	_deallocate_tokens(&tokens);
 	return num_tokens;	
 }
 
+
 /**
+ * Reads the flat file; The first line of the file is interpreted as the field list
+ * (since the headings of the columns correspond to the data below). The team field
+ * list is populated from this line. The rest of the lines are used to fill out the
+ * individual teams.
  *
+ * @return Negative on error
  */
 
 int ncrunch_flatf_read(const char* filename)
@@ -188,6 +245,7 @@ int ncrunch_flatf_read(const char* filename)
 
 	fd = _flatf_open(filename);
 	if (fd < 0) {
+		fprintf(stderr, "%s: could not open file %s\n", __func__, filename);
 		return -1;
 	}
 
@@ -196,6 +254,7 @@ int ncrunch_flatf_read(const char* filename)
 
 	count = _flatf_read_line(fd, buffer, FLATF_READBUFSIZE);
 	token_list_length = _flatf_tokenize_line(buffer, &token_list);
+	_deallocate_tokens(&token_list);
 
 	_flatf_close(fd);
 
