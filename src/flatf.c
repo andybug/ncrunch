@@ -25,14 +25,11 @@
  * @return Negative if error
  */
 
-static int _flatf_open(const char* filename)
+static int _open_file(const char* filename)
 {
 	int fd;
 
-	assert(filename);
-
 	fd = open(filename, O_RDONLY);
-
 	if (fd < 0) {	/* error */
 		/* TODO: get error from errno and put in nice print outs */
 		return -1;
@@ -48,12 +45,11 @@ static int _flatf_open(const char* filename)
  * @return Negative if error
  */
 
-static int _flatf_close(int fd)
+static int _close_file(int fd)
 {
 	int err;
 
 	err = close(fd);
-
 	if (err) {
 		exit(-1); /* just die for now... */
 		/* TODO: error checking */
@@ -76,11 +72,10 @@ static int _flatf_close(int fd)
  * @return The number of characters read into the buffer
  */
 
-static size_t _flatf_read_line(int fd, char* buffer, size_t len)
+static size_t _read_line(int fd, char* buffer, size_t len)
 {
 	size_t count = 0;
 	char c;
-
 
 	while (read(fd, &c, 1)) {
 
@@ -108,9 +103,9 @@ static size_t _flatf_read_line(int fd, char* buffer, size_t len)
  * The str pointer points into the buffer - DO NOT FREE IT
  */
 
-struct _flatf_token {
+struct _token {
 	const char* str;	/* pointer into buffer */
-	struct _flatf_token* next;
+	struct _token* next;
 };
 
 
@@ -128,10 +123,10 @@ struct _flatf_token {
  * @return The number of characters read, not including the null terminator
  */
 
-static size_t _flatf_tokenize_line(char* buffer, struct _flatf_token** token_list)
+static size_t _tokenize_line(char* buffer, struct _token** token_list)
 {
-	struct _flatf_token *list = NULL;
-	struct _flatf_token *token = NULL;
+	struct _token *list = NULL;
+	struct _token *token = NULL;
 	size_t count = 0;
 	char *str;
 
@@ -142,7 +137,7 @@ static size_t _flatf_tokenize_line(char* buffer, struct _flatf_token** token_lis
 			list = malloc(sizeof(*list));
 			token = list;
 		} else {
-			token->next = malloc(sizeof(struct _flatf_token));
+			token->next = malloc(sizeof(struct _token));
 			token = token->next;
 		}
 
@@ -165,10 +160,10 @@ static size_t _flatf_tokenize_line(char* buffer, struct _flatf_token** token_lis
  * Deallocates a token list
  */
 
-static void _deallocate_tokens(struct _flatf_token **token_list)
+static void _deallocate_tokens(struct _token **token_list)
 {
-	struct _flatf_token *token = *token_list;
-	struct _flatf_token *next;
+	struct _token *token = *token_list;
+	struct _token *next;
 
 	while (token) {
 		next = token->next;
@@ -188,21 +183,21 @@ static void _deallocate_tokens(struct _flatf_token **token_list)
  * @return The number of fields added to the team field list
  */
 
-static size_t _flatf_read_fields_list(int fd, char *buf)
+static size_t _read_fields_list(int fd, char *buf)
 {
 	size_t count;
-	struct _flatf_token *tokens, *token;
+	struct _token *tokens, *token;
 	size_t num_tokens;
 	size_t i;
 
-	count = _flatf_read_line(fd, buf, FLATF_READBUFSIZE);
+	count = _read_line(fd, buf, FLATF_READBUFSIZE);
 	if (!count) {
 		/* no data or too much data! */
 		fprintf(stderr, "%s: failed to read fields line\n", __func__);
 		return 0;
 	}
 
-	num_tokens = _flatf_tokenize_line(buf, &tokens);
+	num_tokens = _tokenize_line(buf, &tokens);
 	if (!num_tokens) {
 		/* not formatted correctly */
 		fprintf(stderr, "%s: fields line incorrectly formatted\n", __func__);
@@ -236,16 +231,16 @@ static size_t _read_team(int fd, char *buf)
 {
 	size_t count;
 	size_t toread = team_field_list_num_fields();
-	struct _flatf_token *tokens, *token;
+	struct _token *tokens, *token;
 	size_t num_tokens;
 	size_t i;
 
-	count = _flatf_read_line(fd, buf, FLATF_READBUFSIZE);
+	count = _read_line(fd, buf, FLATF_READBUFSIZE);
 	if (!count) {
 		return toread;
 	}
 
-	num_tokens = _flatf_tokenize_line(buf, &tokens);
+	num_tokens = _tokenize_line(buf, &tokens);
 	if (num_tokens != toread) {
 		fprintf(stderr, "%s: team only has %lu/%lu fields\n", __func__, num_tokens, toread);
 		_deallocate_tokens(&tokens);
@@ -272,21 +267,21 @@ static size_t _read_team(int fd, char *buf)
  * @return Negative on error
  */
 
-int ncrunch_flatf_read(const char* filename)
+int flatf_read(const char* filename)
 {
 	int fd;
 	char buffer[FLATF_READBUFSIZE];
 	size_t count;
 
 
-	fd = _flatf_open(filename);
+	fd = _open_file(filename);
 	if (fd < 0) {
 		fprintf(stderr, "%s: could not open file %s\n", __func__, filename);
 		return -1;
 	}
 
 	/* read heading line which contains the variable names */
-	count = _flatf_read_fields_list(fd, buffer);
+	count = _read_fields_list(fd, buffer);
 	if (count == 0) {
 		return -2;
 	}
@@ -297,7 +292,7 @@ int ncrunch_flatf_read(const char* filename)
 	}
 
 
-	_flatf_close(fd);
+	_close_file(fd);
 
 	return 0;
 }

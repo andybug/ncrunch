@@ -73,6 +73,6 @@ struct team {
 /* Functions for reading flat file that contains team data */
 
 
-int ncrunch_flatf_read(const char* filename);
+int flatf_read(const char* filename);
 
 
