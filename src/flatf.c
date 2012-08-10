@@ -249,10 +249,10 @@ static size_t _read_team(int fd, char *buf)
 
 	token = tokens;
 	for (i = 0; i < num_tokens; i++) {
-		printf("%s: %s\n", team_field_list_get_name(i), token->str);
 		token = token->next;
 	}
 
+	team_create(0, tokens->str);
 	_deallocate_tokens(&tokens);
 	return 0;
 }

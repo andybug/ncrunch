@@ -14,7 +14,7 @@ struct ncrunch_crypto_digest {
 };
 
 
-void ncrunch_crypto_hash(const unsigned char* data, size_t len, struct ncrunch_crypto_digest* digest);
+void ncrunch_crypto_hash_string(const char* str, size_t len, struct ncrunch_crypto_digest* digest);
 void ncrunch_crypto_show_hash(const struct ncrunch_crypto_digest* digest);
 
 
