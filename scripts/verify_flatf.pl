@@ -14,6 +14,8 @@ $line_num = 1;
 open FLATF, '<', $filename or die $!;
 
 
+
+
 print "Reading field headings...\t\t\t";
 
 @field_names = split(/\t+/, <FLATF>);
@@ -25,8 +27,21 @@ foreach $field (@field_names) {
 		print "field heading '$field' is not valid\n";
 		exit -2;
 	}
+
+	if ($field =~ /^name$/i) {
+		$name_heading = 1;
+	}
 }
+
+if (!$name_heading) {
+	&printFAILED;
+	print "required heading field 'name' missing\n";
+	exit -2;
+}
+
 &printOK;
+
+
 
 
 %field_types = ();
@@ -83,7 +98,7 @@ print "\t\t\t\t\t\t";
 
 
 sub isAlpha {
-	return $_[0] =~ /^[a-zA-Z &]+$/;
+	return $_[0] =~ /^[a-zA-Z &-]+$/;
 }
 
 
