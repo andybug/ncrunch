@@ -68,18 +68,17 @@ static int _close_file(int fd)
  * TODO: memory map the file
  *
  * @param buffer The buffer that is to be read into
- * @param len The size of the buffer
  * @return The number of characters read into the buffer
  */
 
-static size_t _read_line(int fd, char* buffer, size_t len)
+static size_t _read_line(int fd, char* buffer)
 {
 	size_t count = 0;
 	char c;
 
 	while (read(fd, &c, 1)) {
 
-		if (count == len) {	/* line won't fit in buffer */
+		if (count == FLATF_READBUFSIZE) {	/* line won't fit in buffer */
 			fprintf(stderr, "%s: Line too long for buffer!\n", __func__);
 			return 0;
 		}
@@ -190,7 +189,7 @@ static size_t _read_fields_list(int fd, char *buf)
 	size_t num_tokens;
 	size_t i;
 
-	count = _read_line(fd, buf, FLATF_READBUFSIZE);
+	count = _read_line(fd, buf);
 	if (!count) {
 		/* no data or too much data! */
 		fprintf(stderr, "%s: failed to read fields line\n", __func__);
@@ -235,7 +234,7 @@ static size_t _read_team(int fd, char *buf)
 	size_t num_tokens;
 	size_t i;
 
-	count = _read_line(fd, buf, FLATF_READBUFSIZE);
+	count = _read_line(fd, buf);
 	if (!count) {
 		return toread;
 	}
