@@ -37,7 +37,7 @@ enum team_field_type {
  */
 
 struct team_field_list {
-	const char **field_name;
+	char **field_name;
 	enum team_field_type *field_type;
 	size_t num_fields;
 };
@@ -49,13 +49,15 @@ int team_field_list_set_type(size_t id, enum team_field_type type);
 const char *team_field_list_get_name(size_t id);
 enum team_field_type team_field_list_get_type(size_t id);
 
+int team_field_list_destroy(void);
+
 
 /**
  *
  */
 
 union team_field {
-	const char* data_s;
+	char* data_s;
 	double data_d;
 };
 

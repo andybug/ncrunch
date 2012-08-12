@@ -168,6 +168,7 @@ int main(int argc, char** argv)
 
 	flatf_read("test.txt");
 	teams_destroy();
+	team_field_list_destroy();
 
 	return 0;
 }

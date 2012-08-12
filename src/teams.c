@@ -21,21 +21,41 @@ static size_t num_teams = 0;
 
 
 
+/**
+ * Allocates the team field list for the specified number of fields
+ *
+ * @return Negative on error
+ */
+
 int team_field_list_create(size_t num_fields)
 {
 	assert(team_fields.num_fields == 0);
 
 	team_fields.field_name = calloc(num_fields, sizeof(char*));
-	team_fields.field_type = calloc(num_fields, sizeof(char*));
+	team_fields.field_type = calloc(num_fields, sizeof(enum team_field_type));
 	team_fields.num_fields = num_fields;
 
 	return 0;
 }
 
+
+/**
+ * Get the number of fields in the team field list
+ */
+
 size_t team_field_list_num_fields(void)
 {
 	return team_fields.num_fields;
 }
+
+
+/**
+ * Set the name of a field in the list
+ *
+ * @param id The id of the field
+ * @param name The name for the field (Copied)
+ * @return Negative on error
+ */
 
 int team_field_list_set_name(size_t id, const char *name)
 {
@@ -46,6 +66,15 @@ int team_field_list_set_name(size_t id, const char *name)
 	return 0;
 }
 
+
+/**
+ * Set the type of a field in the list
+ *
+ * @param id The id of the field
+ * @param type The type to set the field to
+ * @return Negative on error
+ */
+
 int team_field_list_set_type(size_t id, enum team_field_type type)
 {
 	if (id >= team_fields.num_fields)
@@ -55,6 +84,14 @@ int team_field_list_set_type(size_t id, enum team_field_type type)
 	return 0;
 }
 
+
+/**
+ * Get the name of a field
+ *
+ * @param id The field's id
+ * @return Returns a const* to the field's name. DO NOT MODIFY
+ */
+
 const char *team_field_list_get_name(size_t id)
 {
 	if (id >= team_fields.num_fields)
@@ -62,6 +99,14 @@ const char *team_field_list_get_name(size_t id)
 
 	return team_fields.field_name[id];
 }
+
+
+/**
+ * Get the type of a field
+ *
+ * @param id The field's id
+ * @return The type of the field
+ */
 
 enum team_field_type team_field_list_get_type(size_t id)
 {
@@ -73,7 +118,32 @@ enum team_field_type team_field_list_get_type(size_t id)
 
 
 /**
+ * Cleans up the allocations made for the team field list
  *
+ * DEBUG only
+ */
+
+int team_field_list_destroy(void)
+{
+	size_t i;
+
+	for (i = 0; i < team_fields.num_fields; i++) {
+		free(team_fields.field_name[i]);
+	}
+
+	free(team_fields.field_name);
+	free(team_fields.field_type);
+	memset(&team_fields, 0, sizeof(struct team_field_list));
+	return 0;
+}
+
+
+/**
+ * Adds a team to the team list
+ * 
+ * @param id The id of the team to create [index into team list]
+ * @param name The name to give to the team
+ * @return Returns negative on error
  */
 
 int team_create(size_t id, const char *name)
@@ -99,11 +169,13 @@ int team_create(size_t id, const char *name)
  * Cleans up the allocations for the team
  *
  * DEBUG only
+ * Does not remove the team from the teams list
  */
 
 int team_destroy(size_t id)
 {
 	struct team *team;
+	size_t i;
 
 	if (id >= num_teams) {
 		fprintf(stderr, "%s: id %lu out of range\n", __func__, id);
@@ -112,7 +184,12 @@ int team_destroy(size_t id)
 
 	team = &teams[id];
 	free(team->name);
-	/* FIXME: iterate and free all string fields */
+
+	for (i = 0; i < team_fields.num_fields; i++) {
+		if (team_fields.field_type[i] == TEAM_FIELD_STRING)
+			free(team->fields[i].data_s);
+	}
+
 	free(team->fields);
 	memset(team, 0, sizeof(struct team));
 
@@ -144,7 +221,13 @@ int teams_destroy(void)
 
 
 /**
+ * Sets a field in a team to a string value.
  *
+ * The string is copied.
+ * @param id The team's id
+ * @param field The field's id
+ * @param str The string to be copied into the field
+ * @return Returns negative on error
  */
 
 int team_set_string(size_t id, size_t field, const char *str)
@@ -176,7 +259,12 @@ int team_set_string(size_t id, size_t field, const char *str)
 
 
 /**
+ * Sets a field in a team to a double value
  *
+ * @param id The team's id
+ * @param field The field's id
+ * @param val The value to set the field to
+ * @return Returns negative on error
  */
 
 int team_set_double(size_t id, size_t field, double val)
