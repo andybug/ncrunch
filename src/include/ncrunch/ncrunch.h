@@ -72,12 +72,13 @@ struct team {
 	union team_field *fields;
 };
 
-int team_create(size_t id, const char *name);
+int team_create(const char *name);
 int team_destroy(size_t id);
 int team_set_string(size_t id, size_t field, const char *str);
 int team_set_double(size_t id, size_t field, double val);
 
 int teams_destroy(void);
+size_t teams_num_teams(void);
 
 /* Functions for reading flat file that contains team data */
 

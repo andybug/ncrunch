@@ -141,21 +141,20 @@ int team_field_list_destroy(void)
 /**
  * Adds a team to the team list
  * 
- * @param id The id of the team to create [index into team list]
  * @param name The name to give to the team
  * @return Returns negative on error
  */
 
-int team_create(size_t id, const char *name)
+int team_create(const char *name)
 {
 	struct team *team;
 
-	if (id >= TEAMS_MAXTEAMS) {
+	if (num_teams >= TEAMS_MAXTEAMS) {
 		fprintf(stderr, "%s: Too many teams! Max: %d\n", __func__, TEAMS_MAXTEAMS);
 		return -1;
 	}
 
-	team = &teams[id];
+	team = &teams[num_teams];
 	team->name = strdup(name);
 	ncrunch_crypto_hash_string(name, 0, &team->name_hash);
 	team->fields = calloc(team_fields.num_fields, sizeof(union team_field));
@@ -217,6 +216,16 @@ int teams_destroy(void)
 
 	printf("Destroyed %lu team(s)\n", id);
 	return 0;
+}
+
+
+/**
+ * Get the number of teams
+ */
+
+size_t teams_num_teams(void)
+{
+	return num_teams;
 }
 
 

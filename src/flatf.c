@@ -251,7 +251,7 @@ static size_t _read_team(int fd, char *buf)
 		token = token->next;
 	}
 
-	team_create(0, tokens->str);
+	team_create(tokens->str);
 	_deallocate_tokens(&tokens);
 	return 0;
 }
@@ -266,10 +266,10 @@ static size_t _read_team(int fd, char *buf)
  * @return Negative on error
  */
 
-int flatf_read(const char* filename)
+int flatf_read(const char *filename)
 {
 	int fd;
-	char buffer[FLATF_READBUFSIZE];
+	char buf[FLATF_READBUFSIZE];
 	size_t count;
 
 
@@ -280,15 +280,14 @@ int flatf_read(const char* filename)
 	}
 
 	/* read heading line which contains the variable names */
-	count = _read_fields_list(fd, buffer);
+	count = _read_fields_list(fd, buf);
 	if (count == 0) {
 		return -2;
 	}
 
-	count = _read_team(fd, buffer);
-	if (count) {
-		return -3;
-	}
+	do {
+		count = _read_team(fd, buf);
+	} while (!count);
 
 
 	_close_file(fd);
