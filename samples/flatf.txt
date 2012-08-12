@@ -1,0 +1,4 @@
+name			wins	losses
+Texas A&M		1	0
+LSU			0	1
+Alabama			0	0
