@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <ctype.h>
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -219,6 +220,153 @@ static size_t _read_fields_list(int fd, char *buf)
 
 
 /**
+ * Finds the string name associated with the team's name
+ *
+ * @param list The list of tokens read from the flatf for this team
+ * @return Returns the string name of the currently being read team
+ */
+
+static const char *_get_team_name(struct _token *list)
+{
+	size_t i;
+	size_t nameid;
+	int err;
+
+	err = team_field_list_find("name", &nameid);
+	if (err) {
+		fprintf(stderr, "%s: could not find required 'name' field\n", __func__);
+		return NULL;
+	}
+
+	for (i = 0; i < nameid; i++) {
+		list = list->next;
+	}
+
+	return list->str;
+}
+
+
+/**
+ * Returns whether a string consists only of alpha characters
+ */
+
+static int _isAlpha(const char *str)
+{
+	while (*str) {
+		if (!isalpha(*str) && !ispunct(*str) && *str != ' ') {
+			return 0;
+		}
+
+		str++;
+	}
+
+	return 1;
+}
+
+
+/**
+ * Returns whether a string consists only of numbers
+ */
+
+static int _isNumeric(const char *str)
+{
+	while (*str) {
+		if (!isdigit(*str) && *str != '.') {
+			return 0;
+		}
+
+		str++;
+	}
+
+	return 1;
+}
+
+
+/**
+ *
+ */
+
+static int _set_fields(struct _token *list, size_t teamid)
+{
+	enum team_field_type type;
+	size_t id = 0;
+	double conv;
+
+	while (list) {
+		type = team_field_list_get_type(id);
+
+		if (_isAlpha(list->str)) {
+			if (type == TEAM_FIELD_DOUBLE) {
+				fprintf(stderr, "%s: token '%s' is not numeric!\n", __func__, list->str);
+				return -1;
+			}
+
+			else if (type == TEAM_FIELD_INVALID) {
+				team_field_list_set_type(id, TEAM_FIELD_STRING);
+			}
+
+			team_set_string(teamid, id, list->str);
+		}
+
+		else if (_isNumeric(list->str)) {
+			if (type == TEAM_FIELD_STRING) {
+				fprintf(stderr, "%s: token '%s' is not alpha!\n", __func__, list->str);
+				return -2;
+			}
+
+			else if (type == TEAM_FIELD_INVALID) {
+				team_field_list_set_type(id, TEAM_FIELD_DOUBLE);
+			}
+
+			conv = atof(list->str);
+			team_set_double(teamid, id, conv);
+		}
+
+		else {
+			fprintf(stderr, "%s: illegal value '%s'\n", __func__, list->str);
+			return -3;
+		}
+
+		list = list->next;
+		id++;
+	}
+
+	return 0;
+}
+
+
+/**
+ *
+ */
+
+static int _create_team(struct _token *list)
+{
+	const char *name;
+	int err;
+	size_t teamid;
+
+	name = _get_team_name(list);
+	if (!name) {
+		return -1;
+	}
+
+	err = team_create(name, &teamid);
+	if (err) {
+		fprintf(stderr, "%s: unable to create team '%s'\n", __func__, name);
+		return -2;
+	}
+
+	err = _set_fields(list, teamid);
+	if (err) {
+		fprintf(stderr, "%s: unable to read field for team '%s'\n", __func__, name);
+		return -3;
+	}
+
+	return 0;
+}
+
+
+/**
  * Reads a line from the file and interprets it as team data.
  *
  * @param buf The buffer to use for reading
@@ -251,7 +399,7 @@ static size_t _read_team(int fd, char *buf)
 		token = token->next;
 	}
 
-	team_create(tokens->str);
+	_create_team(tokens);
 	_deallocate_tokens(&tokens);
 	return 0;
 }

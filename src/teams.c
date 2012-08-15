@@ -118,6 +118,30 @@ enum team_field_type team_field_list_get_type(size_t id)
 
 
 /**
+ * Locates a field by name
+ *
+ * @param name The name to match to a field name
+ * @param id The id of a match, will be set if one is found
+ * @return Negative if field not found
+ */
+
+int team_field_list_find(const char *name, size_t *id)
+{
+	size_t i;
+
+	for (i = 0; i < team_fields.num_fields; i++) {
+		/* FIXME: make this strcmpi - have to implement */
+		if (strcmp(team_fields.field_name[i], name) == 0) {
+			*id = i;
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
+
+/**
  * Cleans up the allocations made for the team field list
  *
  * DEBUG only
@@ -142,10 +166,11 @@ int team_field_list_destroy(void)
  * Adds a team to the team list
  * 
  * @param name The name to give to the team
+ * @param teamid The teamid that was assigned (output)
  * @return Returns negative on error
  */
 
-int team_create(const char *name)
+int team_create(const char *name, size_t *teamid)
 {
 	struct team *team;
 
@@ -159,6 +184,7 @@ int team_create(const char *name)
 	ncrunch_crypto_hash_string(name, 0, &team->name_hash);
 	team->fields = calloc(team_fields.num_fields, sizeof(union team_field));
 
+	*teamid = num_teams;
 	num_teams++;
 	return 0;
 }

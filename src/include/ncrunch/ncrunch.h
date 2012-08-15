@@ -26,9 +26,9 @@
  */
 
 enum team_field_type {
+	TEAM_FIELD_INVALID = 0, /* this needs to be 0 (calloc initialized array) */
 	TEAM_FIELD_STRING,
-	TEAM_FIELD_DOUBLE,
-	TEAM_FIELD_INVALID
+	TEAM_FIELD_DOUBLE
 };
 
 
@@ -48,6 +48,7 @@ int team_field_list_set_name(size_t id, const char *name);
 int team_field_list_set_type(size_t id, enum team_field_type type);
 const char *team_field_list_get_name(size_t id);
 enum team_field_type team_field_list_get_type(size_t id);
+int team_field_list_find(const char *name, size_t *id);
 
 int team_field_list_destroy(void);
 
@@ -72,7 +73,7 @@ struct team {
 	union team_field *fields;
 };
 
-int team_create(const char *name);
+int team_create(const char *name, size_t *teamid);
 int team_destroy(size_t id);
 int team_set_string(size_t id, size_t field, const char *str);
 int team_set_double(size_t id, size_t field, double val);
