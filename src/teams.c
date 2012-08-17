@@ -7,13 +7,13 @@
 #include <ncrunch/ncrunch.h>
 
 
+#define TFL_MAXFIELDS  16
 #define TEAMS_MAXTEAMS 64
 
 
-static struct team_field_list team_fields = {
-			.field_name = NULL,
-			.field_type = NULL,
-			.num_fields = 0 };
+
+static struct tfl_entry *tfl = NULL;
+static size_t num_fields = 0;
 
 
 static struct team teams[TEAMS_MAXTEAMS];
@@ -27,13 +27,13 @@ static size_t num_teams = 0;
  * @return Negative on error
  */
 
-int team_field_list_create(size_t num_fields)
+int tfl_create(size_t num_fields_)
 {
-	assert(team_fields.num_fields == 0);
+	assert(num_fields == 0);
+	assert(num_fields_ <= TFL_MAXFIELDS);
 
-	team_fields.field_name = calloc(num_fields, sizeof(char*));
-	team_fields.field_type = calloc(num_fields, sizeof(enum team_field_type));
-	team_fields.num_fields = num_fields;
+	tfl = calloc(num_fields_, sizeof(struct tfl_entry));
+	num_fields = num_fields_;
 
 	return 0;
 }
@@ -43,9 +43,9 @@ int team_field_list_create(size_t num_fields)
  * Get the number of fields in the team field list
  */
 
-size_t team_field_list_num_fields(void)
+size_t tfl_num_fields(void)
 {
-	return team_fields.num_fields;
+	return num_fields;
 }
 
 
@@ -57,12 +57,12 @@ size_t team_field_list_num_fields(void)
  * @return Negative on error
  */
 
-int team_field_list_set_name(size_t id, const char *name)
+int tfl_set_name(size_t id, const char *name)
 {
-	if (id >= team_fields.num_fields)
+	if (id >= num_fields)
 		return -1;
 
-	team_fields.field_name[id] = strdup(name);
+	tfl[id].name = strdup(name);
 	return 0;
 }
 
@@ -75,12 +75,12 @@ int team_field_list_set_name(size_t id, const char *name)
  * @return Negative on error
  */
 
-int team_field_list_set_type(size_t id, enum team_field_type type)
+int tfl_set_type(size_t id, enum tfl_type type)
 {
-	if (id >= team_fields.num_fields)
+	if (id >= num_fields)
 		return -1;
 
-	team_fields.field_type[id] = type;
+	tfl[id].type = type;
 	return 0;
 }
 
@@ -92,12 +92,12 @@ int team_field_list_set_type(size_t id, enum team_field_type type)
  * @return Returns a const* to the field's name. DO NOT MODIFY
  */
 
-const char *team_field_list_get_name(size_t id)
+const char *tfl_get_name(size_t id)
 {
-	if (id >= team_fields.num_fields)
+	if (id >= num_fields)
 		return NULL;
 
-	return team_fields.field_name[id];
+	return tfl[id].name;
 }
 
 
@@ -108,12 +108,12 @@ const char *team_field_list_get_name(size_t id)
  * @return The type of the field
  */
 
-enum team_field_type team_field_list_get_type(size_t id)
+enum tfl_type tfl_get_type(size_t id)
 {
-	if (id >= team_fields.num_fields)
+	if (id >= num_fields)
 		return TEAM_FIELD_INVALID;
 
-	return team_fields.field_type[id];
+	return tfl[id].type;
 }
 
 
@@ -125,13 +125,13 @@ enum team_field_type team_field_list_get_type(size_t id)
  * @return Negative if field not found
  */
 
-int team_field_list_find(const char *name, size_t *id)
+int tfl_find(const char *name, size_t *id)
 {
 	size_t i;
 
-	for (i = 0; i < team_fields.num_fields; i++) {
+	for (i = 0; i < num_fields; i++) {
 		/* FIXME: make this strcmpi - have to implement */
-		if (strcmp(team_fields.field_name[i], name) == 0) {
+		if (strcmp(tfl[i].name, name) == 0) {
 			*id = i;
 			return 0;
 		}
@@ -147,17 +147,17 @@ int team_field_list_find(const char *name, size_t *id)
  * DEBUG only
  */
 
-int team_field_list_destroy(void)
+int tfl_destroy(void)
 {
 	size_t i;
 
-	for (i = 0; i < team_fields.num_fields; i++) {
-		free(team_fields.field_name[i]);
+	for (i = 0; i < num_fields; i++) {
+		free(tfl[i].name);
 	}
 
-	free(team_fields.field_name);
-	free(team_fields.field_type);
-	memset(&team_fields, 0, sizeof(struct team_field_list));
+	free(tfl);
+	tfl = NULL;
+	num_fields = 0;
 	return 0;
 }
 
@@ -182,7 +182,7 @@ int team_create(const char *name, size_t *teamid)
 	team = &teams[num_teams];
 	team->name = strdup(name);
 	ncrunch_crypto_hash_string(name, 0, &team->name_hash);
-	team->fields = calloc(team_fields.num_fields, sizeof(union team_field));
+	team->fields = calloc(num_fields, sizeof(union team_field));
 
 	*teamid = num_teams;
 	num_teams++;
@@ -210,8 +210,8 @@ int team_destroy(size_t id)
 	team = &teams[id];
 	free(team->name);
 
-	for (i = 0; i < team_fields.num_fields; i++) {
-		if (team_fields.field_type[i] == TEAM_FIELD_STRING)
+	for (i = 0; i < num_fields; i++) {
+		if (tfl[i].type == TEAM_FIELD_STRING)
 			free(team->fields[i].data_s);
 	}
 
@@ -268,7 +268,7 @@ size_t teams_num_teams(void)
 int team_set_string(size_t id, size_t field, const char *str)
 {
 	struct team *team;
-	enum team_field_type type;
+	enum tfl_type type;
 
 	if (id >= num_teams) {
 		fprintf(stderr, "%s: id %lu out of range\n", __func__, id);
@@ -276,7 +276,7 @@ int team_set_string(size_t id, size_t field, const char *str)
 	}
 
 	team = &teams[id];
-	type = team_field_list_get_type(field);
+	type = tfl_get_type(field);
 
 	if (type == TEAM_FIELD_INVALID) {
 		fprintf(stderr, "%s: invalid field id %lu\n", __func__, field);
@@ -305,7 +305,7 @@ int team_set_string(size_t id, size_t field, const char *str)
 int team_set_double(size_t id, size_t field, double val)
 {
 	struct team *team;
-	enum team_field_type type;
+	enum tfl_type type;
 
 	if (id >= num_teams) {
 		fprintf(stderr, "%s: id %lu out of range\n", __func__, id);
@@ -313,7 +313,7 @@ int team_set_double(size_t id, size_t field, double val)
 	}
 
 	team = &teams[id];
-	type = team_field_list_get_type(field);
+	type = tfl_get_type(field);
 
 	if (type == TEAM_FIELD_INVALID) {
 		fprintf(stderr, "%s: invalid field id %lu\n", __func__, field);

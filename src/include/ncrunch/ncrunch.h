@@ -25,7 +25,7 @@
  *
  */
 
-enum team_field_type {
+enum tfl_type {
 	TEAM_FIELD_INVALID = 0, /* this needs to be 0 (calloc initialized array) */
 	TEAM_FIELD_STRING,
 	TEAM_FIELD_DOUBLE
@@ -36,21 +36,32 @@ enum team_field_type {
  *
  */
 
-struct team_field_list {
-	char **field_name;
-	enum team_field_type *field_type;
+struct tfl {
+	char **names;
+	enum tfl_type *types;
 	size_t num_fields;
 };
 
-int team_field_list_create(size_t num_fields);
-size_t team_field_list_num_fields(void);
-int team_field_list_set_name(size_t id, const char *name);
-int team_field_list_set_type(size_t id, enum team_field_type type);
-const char *team_field_list_get_name(size_t id);
-enum team_field_type team_field_list_get_type(size_t id);
-int team_field_list_find(const char *name, size_t *id);
 
-int team_field_list_destroy(void);
+/**
+ *
+ */
+
+struct tfl_entry {
+	char *name;
+	enum tfl_type type;
+};
+
+
+int tfl_create(size_t num_fields);
+size_t tfl_num_fields(void);
+int tfl_set_name(size_t id, const char *name);
+int tfl_set_type(size_t id, enum tfl_type type);
+const char *tfl_get_name(size_t id);
+enum tfl_type tfl_get_type(size_t id);
+int tfl_find(const char *name, size_t *id);
+
+int tfl_destroy(void);
 
 
 /**

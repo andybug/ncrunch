@@ -206,11 +206,11 @@ static size_t _read_fields_list(int fd, char *buf)
 	}
 
 	
-	team_field_list_create(num_tokens);
+	tfl_create(num_tokens);
 	token = tokens;
 
 	for (i = 0; i < num_tokens; i++) {
-		team_field_list_set_name(i, token->str);
+		tfl_set_name(i, token->str);
 		token = token->next;
 	}
 
@@ -232,7 +232,7 @@ static const char *_get_team_name(struct _token *list)
 	size_t nameid;
 	int err;
 
-	err = team_field_list_find("name", &nameid);
+	err = tfl_find("name", &nameid);
 	if (err) {
 		fprintf(stderr, "%s: could not find required 'name' field\n", __func__);
 		return NULL;
@@ -288,12 +288,12 @@ static int _isNumeric(const char *str)
 
 static int _set_fields(struct _token *list, size_t teamid)
 {
-	enum team_field_type type;
+	enum tfl_type type;
 	size_t id = 0;
 	double conv;
 
 	while (list) {
-		type = team_field_list_get_type(id);
+		type = tfl_get_type(id);
 
 		if (_isAlpha(list->str)) {
 			if (type == TEAM_FIELD_DOUBLE) {
@@ -302,7 +302,7 @@ static int _set_fields(struct _token *list, size_t teamid)
 			}
 
 			else if (type == TEAM_FIELD_INVALID) {
-				team_field_list_set_type(id, TEAM_FIELD_STRING);
+				tfl_set_type(id, TEAM_FIELD_STRING);
 			}
 
 			team_set_string(teamid, id, list->str);
@@ -315,7 +315,7 @@ static int _set_fields(struct _token *list, size_t teamid)
 			}
 
 			else if (type == TEAM_FIELD_INVALID) {
-				team_field_list_set_type(id, TEAM_FIELD_DOUBLE);
+				tfl_set_type(id, TEAM_FIELD_DOUBLE);
 			}
 
 			conv = atof(list->str);
@@ -377,7 +377,7 @@ static int _create_team(struct _token *list)
 static size_t _read_team(int fd, char *buf)
 {
 	size_t count;
-	size_t toread = team_field_list_num_fields();
+	size_t toread = tfl_num_fields();
 	struct _token *tokens, *token;
 	size_t num_tokens;
 	size_t i;
