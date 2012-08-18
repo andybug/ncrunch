@@ -8,7 +8,6 @@
 
 
 #define TFL_MAXFIELDS  16
-#define TEAMS_MAXTEAMS 64
 
 
 
@@ -165,28 +164,24 @@ int tfl_destroy(void)
 /**
  * Adds a team to the team list
  * 
- * @param name The name to give to the team
- * @param teamid The teamid that was assigned (output)
- * @return Returns negative on error
+ * @return Returns the id of the created team or TEAMS_INVALID on error
  */
 
-int team_create(const char *name, size_t *teamid)
+size_t team_create(void)
 {
 	struct team *team;
+	size_t id = num_teams;
 
 	if (num_teams >= TEAMS_MAXTEAMS) {
 		fprintf(stderr, "%s: Too many teams! Max: %d\n", __func__, TEAMS_MAXTEAMS);
-		return -1;
+		return TEAMS_INVALID;
 	}
 
-	team = &teams[num_teams];
-	team->name = strdup(name);
-	ncrunch_crypto_hash_string(name, 0, &team->name_hash);
+	team = &teams[id];
 	team->fields = calloc(num_fields, sizeof(union team_field));
 
-	*teamid = num_teams;
 	num_teams++;
-	return 0;
+	return id;
 }
 
 
@@ -208,7 +203,6 @@ int team_destroy(size_t id)
 	}
 
 	team = &teams[id];
-	free(team->name);
 
 	for (i = 0; i < num_fields; i++) {
 		if (tfl[i].type == TEAM_FIELD_STRING)

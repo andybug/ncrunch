@@ -36,17 +36,6 @@ enum tfl_type {
  *
  */
 
-struct tfl {
-	char **names;
-	enum tfl_type *types;
-	size_t num_fields;
-};
-
-
-/**
- *
- */
-
 struct tfl_entry {
 	char *name;
 	enum tfl_type type;
@@ -64,6 +53,15 @@ int tfl_find(const char *name, size_t *id);
 int tfl_destroy(void);
 
 
+
+
+
+
+#define TEAMS_MAXTEAMS	64
+#define TEAMS_INVALID	TEAMS_MAXTEAMS
+
+
+
 /**
  *
  */
@@ -79,12 +77,11 @@ union team_field {
  */
 
 struct team {
-	char *name;
-	struct ncrunch_crypto_digest name_hash;
+	struct ncrunch_crypto_digest name;
 	union team_field *fields;
 };
 
-int team_create(const char *name, size_t *teamid);
+size_t team_create(void);
 int team_destroy(size_t id);
 int team_set_string(size_t id, size_t field, const char *str);
 int team_set_double(size_t id, size_t field, double val);

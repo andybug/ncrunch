@@ -219,6 +219,7 @@ static size_t _read_fields_list(int fd, char *buf)
 }
 
 
+#if 0
 /**
  * Finds the string name associated with the team's name
  *
@@ -244,6 +245,7 @@ static const char *_get_team_name(struct _token *list)
 
 	return list->str;
 }
+#endif
 
 
 /**
@@ -341,24 +343,19 @@ static int _set_fields(struct _token *list, size_t teamid)
 
 static int _create_team(struct _token *list)
 {
-	const char *name;
 	int err;
 	size_t teamid;
 
-	name = _get_team_name(list);
-	if (!name) {
-		return -1;
-	}
 
-	err = team_create(name, &teamid);
-	if (err) {
-		fprintf(stderr, "%s: unable to create team '%s'\n", __func__, name);
+	teamid = team_create();
+	if (teamid == TEAMS_INVALID) {
+		fprintf(stderr, "%s: unable to create team\n", __func__);
 		return -2;
 	}
 
 	err = _set_fields(list, teamid);
 	if (err) {
-		fprintf(stderr, "%s: unable to read field for team '%s'\n", __func__, name);
+		fprintf(stderr, "%s: unable to read field for team\n", __func__);
 		return -3;
 	}
 
@@ -419,6 +416,7 @@ int flatf_read(const char *filename)
 	int fd;
 	char buf[FLATF_READBUFSIZE];
 	size_t count;
+	size_t diff;
 
 
 	fd = _open_file(filename);
@@ -434,8 +432,8 @@ int flatf_read(const char *filename)
 	}
 
 	do {
-		count = _read_team(fd, buf);
-	} while (!count);
+		diff = _read_team(fd, buf);
+	} while (!diff);
 
 
 	_close_file(fd);
