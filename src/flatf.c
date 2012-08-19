@@ -99,45 +99,64 @@ static size_t _read_line(int fd, char* buffer)
 
 
 /**
- * Token structure for breaking up lines from the file
+ * A token from the current line in the buffer
+ *
  * The str pointer points into the buffer - DO NOT FREE IT
  */
 
-struct _token {
-	const char* str;	/* pointer into buffer */
-	struct _token* next;
+struct token {
+	const char *str;	/* pointer into buffer */
+	struct token *next;
+};
+
+
+/**
+ * Contains a list of tokens from a line in the flatf
+ *
+ * Create by calling _tokenize_line()
+ * Cleaned up by calling _deallocate_tokens()
+ */
+
+struct tokenlist {
+	struct token *head;
+	size_t num_tokens;
 };
 
 
 /**
  * Tokenizes the line contained in a buffer into a token list
- * The token list is allocated in the function
+ *
+ * Each token in the list will be allocated inside the function
  * Be sure to call _deallocate_tokens() afterwords
  *
  * @param buffer The buffer that contains a line to be tokenized, it will be modified
  * during the tokenization process
  *
- * @param token_list An unallocated token to be used as the resulting token list.
- * The token will be allocated inside the function
+ * @param list The container for the resulting tokens; the individual tokens
+ * will be allocated as needed. Call _deallocate_tokens() when done to clean
+ * up the list.
  *
  * @return The number of characters read, not including the null terminator
  */
 
-static size_t _tokenize_line(char* buffer, struct _token** token_list)
+static size_t _tokenize_line(char* buffer, struct tokenlist *list)
 {
-	struct _token *list = NULL;
-	struct _token *token = NULL;
+	struct token *token = NULL;
 	size_t count = 0;
 	char *str;
+
+	/* go ahead and reset the list, they better have deallocated! */
+	memset(list, 0, sizeof(struct tokenlist));
+
 
 	str = strtok(buffer, "\t");
 
 	while (str) {
-		if (!list) {
-			list = malloc(sizeof(*list));
-			token = list;
+		if (!list->head) {
+			list->head = malloc(sizeof(struct token));
+			token = list->head;
 		} else {
-			token->next = malloc(sizeof(struct _token));
+			token->next = malloc(sizeof(struct token));
 			token = token->next;
 		}
 
@@ -148,22 +167,19 @@ static size_t _tokenize_line(char* buffer, struct _token** token_list)
 		str = strtok(NULL, "\t");
 	}
 
-	if (count) {
-		*token_list = list;
-	}
-
+	list->num_tokens = count;
 	return count;
 }
 
 
 /**
- * Deallocates a token list
+ * Deallocates the tokens in a token list
  */
 
-static void _deallocate_tokens(struct _token **token_list)
+static void _deallocate_tokens(struct tokenlist *list)
 {
-	struct _token *token = *token_list;
-	struct _token *next;
+	struct token *token = list->head;
+	struct token *next;
 
 	while (token) {
 		next = token->next;
@@ -171,7 +187,8 @@ static void _deallocate_tokens(struct _token **token_list)
 		token = next;
 	}
 
-	*token_list = NULL;
+	list->head = NULL;
+	list->num_tokens = 0;
 }
 
 
@@ -186,7 +203,8 @@ static void _deallocate_tokens(struct _token **token_list)
 static size_t _read_fields_list(int fd, char *buf)
 {
 	size_t count;
-	struct _token *tokens, *token;
+	struct tokenlist list;
+	struct token *token;
 	size_t num_tokens;
 	size_t i;
 
@@ -197,24 +215,24 @@ static size_t _read_fields_list(int fd, char *buf)
 		return 0;
 	}
 
-	num_tokens = _tokenize_line(buf, &tokens);
+	num_tokens = _tokenize_line(buf, &list);
 	if (!num_tokens) {
 		/* not formatted correctly */
 		fprintf(stderr, "%s: fields line incorrectly formatted\n", __func__);
-		_deallocate_tokens(&tokens);
+		_deallocate_tokens(&list);
 		return 0;
 	}
 
 	
 	tfl_create(num_tokens);
-	token = tokens;
+	token = list.head;
 
 	for (i = 0; i < num_tokens; i++) {
 		tfl_set_name(i, token->str);
 		token = token->next;
 	}
 
-	_deallocate_tokens(&tokens);
+	_deallocate_tokens(&list);
 	return num_tokens;	
 }
 
@@ -354,27 +372,28 @@ static int  _set_numeric_field(size_t teamid, size_t fieldid, const char *str)
  * @return Negative on error
  */
 
-static int _set_fields(struct _token *list, size_t teamid)
+static int _set_fields(const struct tokenlist *list, size_t teamid)
 {
 	size_t id = 0;
 	int err = 0;
+	struct token *token = list->head;
 
-	while (list) {
-		if (_isAlpha(list->str)) {
-			err = _set_alpha_field(teamid, id, list->str);
+	while (token) {
+		if (_isAlpha(token->str)) {
+			err = _set_alpha_field(teamid, id, token->str);
 		} 
-		else if (_isNumeric(list->str)) {
-			err = _set_numeric_field(teamid, id, list->str);
+		else if (_isNumeric(token->str)) {
+			err = _set_numeric_field(teamid, id, token->str);
 		}
 		else {
-			fprintf(stderr, "%s: illegal value '%s'\n", __func__, list->str);
+			fprintf(stderr, "%s: illegal value '%s'\n", __func__, token->str);
 			err = -3;
 		}
 
 		if (err)
 			break;
 
-		list = list->next;
+		token = token->next;
 		id++;
 	}
 
@@ -389,7 +408,7 @@ static int _set_fields(struct _token *list, size_t teamid)
  * @return Negative on error
  */
 
-static int _create_team(struct _token *list)
+static int _create_team(const struct tokenlist *list)
 {
 	int err;
 	size_t teamid;
@@ -423,7 +442,8 @@ static size_t _read_team(int fd, char *buf)
 {
 	size_t count;
 	size_t toread = tfl_num_fields();
-	struct _token *tokens, *token;
+	struct tokenlist list;
+	struct token *token;
 	size_t num_tokens;
 	size_t i;
 
@@ -432,20 +452,20 @@ static size_t _read_team(int fd, char *buf)
 		return toread;
 	}
 
-	num_tokens = _tokenize_line(buf, &tokens);
+	num_tokens = _tokenize_line(buf, &list);
 	if (num_tokens != toread) {
 		fprintf(stderr, "%s: team only has %lu/%lu fields\n", __func__, num_tokens, toread);
-		_deallocate_tokens(&tokens);
+		_deallocate_tokens(&list);
 		return (num_tokens - toread);
 	}
 
-	token = tokens;
+	token = list.head;
 	for (i = 0; i < num_tokens; i++) {
 		token = token->next;
 	}
 
-	_create_team(tokens);
-	_deallocate_tokens(&tokens);
+	_create_team(&list);
+	_deallocate_tokens(&list);
 	return 0;
 }
 
