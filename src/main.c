@@ -3,6 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include <ncrunch/ncrunch.h>
 
@@ -149,6 +150,20 @@ static int _process_args(int argc, char** argv)
 }
 
 
+/**
+ * Callback for the atexit() function, cleans up allocations
+ *
+ * Only used in debug mode to make sure we aren't losing any allocations
+ */
+
+static void _exit_handler(void)
+{
+#if (NCRUNCH_DEBUG == 1)
+	teams_destroy();
+	tfl_destroy();
+#endif
+}
+
 int main(int argc, char** argv)
 {
 	int error;
@@ -166,9 +181,9 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
+	/* install our exit callback function */
+	atexit(_exit_handler);
 	flatf_read("test.txt");
-	teams_destroy();
-	tfl_destroy();
 
 	return 0;
 }

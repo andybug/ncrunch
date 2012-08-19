@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <ncrunch/crypto.h>
+#include <ncrunch/hash.h>
 
 
 
@@ -77,7 +77,7 @@ union team_field {
  */
 
 struct team {
-	struct ncrunch_crypto_digest name;
+	struct mdigest name;
 	union team_field *fields;
 };
 

@@ -2,8 +2,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <ctype.h>
 
-#include <ncrunch/crypto.h>
+#include <ncrunch/hash.h>
 
 
 
@@ -15,25 +16,45 @@
  * @param digest The resulting message digest
  */
 
-void ncrunch_crypto_hash_string(const char* str, size_t len, struct ncrunch_crypto_digest* digest)
+void hash_string(const char *str, size_t len, struct mdigest* md)
 {
-	assert(str);
-	assert(digest);
-
 	if (len == 0) {
 		len = strlen(str);
 	}
 
-	SHA256((const unsigned char*) str, len, digest->md);
+	SHA256((const unsigned char*) str, len, md->md);
 }
 
+
+/**
+ * Hashes a string, ignoring case
+ *
+ * @param str The string to be hashed
+ * @param md The resulting message digest
+ */
+
+void hash_stringi(const char *str, struct mdigest *md)
+{
+	SHA256_CTX ctx;
+	unsigned char data;
+
+	SHA256_Init(&ctx);
+	
+	while (*str) {
+		data = (unsigned char) tolower(*str);
+		SHA256_Update(&ctx, &data, 1);
+		str++;
+	}
+
+	SHA256_Final(md->md, &ctx);
+}
 
 
 /**
  * Prints the message digest to stdout in hex form [0-9][a-f]. No new line is added
  */
 
-void ncrunch_crypto_show_hash(const struct ncrunch_crypto_digest* digest)
+void hash_show(const struct mdigest* md)
 {
 	int i;
 	unsigned int high, low;
@@ -43,8 +64,8 @@ void ncrunch_crypto_show_hash(const struct ncrunch_crypto_digest* digest)
 					  'c', 'd', 'e', 'f' };
 
 	for (i = 0; i < SHA256_DIGEST_LENGTH; i++) {
-		high = (digest->md[i] >> 4) & 0x0f;
-		low = digest->md[i] & 0x0f;
+		high = (md->md[i] >> 4) & 0x0f;
+		low = md->md[i] & 0x0f;
 
 		putchar(trans[high]);
 		putchar(trans[low]);
