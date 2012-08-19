@@ -249,7 +249,10 @@ static const char *_get_team_name(struct _token *list)
 
 
 /**
- * Returns whether a string consists only of alpha characters
+ * Checks whether a string consists only of alpha characters
+ *
+ * @param str The string to be tested
+ * @return 1 if string contains only valid alpha chars; or 0 otherwise
  */
 
 static int _isAlpha(const char *str)
@@ -268,6 +271,9 @@ static int _isAlpha(const char *str)
 
 /**
  * Returns whether a string consists only of numbers
+ *
+ * @param str The string to be tested
+ * @return 1 if string contains only valid number chars; or 0 otherwise
  */
 
 static int _isNumeric(const char *str)
@@ -285,60 +291,102 @@ static int _isNumeric(const char *str)
 
 
 /**
+ * Sets a team's field to a string value
  *
+ * @param teamid The team that contains the field
+ * @param fieldid The field that is to be set
+ * @param str The string value to set the field to (copy)
+ * @return Negative on error
  */
 
-static int _set_fields(struct _token *list, size_t teamid)
+static int _set_alpha_field(size_t teamid, size_t fieldid, const char *str)
 {
-	enum tfl_type type;
-	size_t id = 0;
-	double conv;
+	enum tfl_type type = tfl_get_type(fieldid);
 
-	while (list) {
-		type = tfl_get_type(id);
+	if (type == TEAM_FIELD_DOUBLE) {
+		fprintf(stderr, "%s: token '%s' is not numeric!\n", __func__, str);
+		return -1;
 
-		if (_isAlpha(list->str)) {
-			if (type == TEAM_FIELD_DOUBLE) {
-				fprintf(stderr, "%s: token '%s' is not numeric!\n", __func__, list->str);
-				return -1;
-			}
-
-			else if (type == TEAM_FIELD_INVALID) {
-				tfl_set_type(id, TEAM_FIELD_STRING);
-			}
-
-			team_set_string(teamid, id, list->str);
-		}
-
-		else if (_isNumeric(list->str)) {
-			if (type == TEAM_FIELD_STRING) {
-				fprintf(stderr, "%s: token '%s' is not alpha!\n", __func__, list->str);
-				return -2;
-			}
-
-			else if (type == TEAM_FIELD_INVALID) {
-				tfl_set_type(id, TEAM_FIELD_DOUBLE);
-			}
-
-			conv = atof(list->str);
-			team_set_double(teamid, id, conv);
-		}
-
-		else {
-			fprintf(stderr, "%s: illegal value '%s'\n", __func__, list->str);
-			return -3;
-		}
-
-		list = list->next;
-		id++;
+	} else if (type == TEAM_FIELD_INVALID) {
+		tfl_set_type(fieldid, TEAM_FIELD_STRING);
 	}
+
+	team_set_string(teamid, fieldid, str);
 
 	return 0;
 }
 
 
 /**
+ * Sets a team's field to a double value
  *
+ * @param teamid The team that contains the field
+ * @param fieldid The field that is to be set
+ * @param str The string containing a numeric value
+ * @return Negative on error
+ */
+
+static int  _set_numeric_field(size_t teamid, size_t fieldid, const char *str)
+{
+	double conv;
+	enum tfl_type type = tfl_get_type(fieldid);
+
+	if (type == TEAM_FIELD_STRING) {
+		fprintf(stderr, "%s: token '%s' is not alpha!\n", __func__, str);
+		return -2;
+
+	} else if (type == TEAM_FIELD_INVALID) {
+		tfl_set_type(fieldid, TEAM_FIELD_DOUBLE);
+	}
+
+	conv = atof(str);
+	team_set_double(teamid, fieldid, conv);
+
+	return 0;
+}
+
+
+/**
+ * Sets a team's field values from the tokenized field listing
+ *
+ * @param list The tokens from the team's line in the flatf file
+ * @param teamid The team to have its fields set
+ * @return Negative on error
+ */
+
+static int _set_fields(struct _token *list, size_t teamid)
+{
+	size_t id = 0;
+	int err = 0;
+
+	while (list) {
+		if (_isAlpha(list->str)) {
+			err = _set_alpha_field(teamid, id, list->str);
+		} 
+		else if (_isNumeric(list->str)) {
+			err = _set_numeric_field(teamid, id, list->str);
+		}
+		else {
+			fprintf(stderr, "%s: illegal value '%s'\n", __func__, list->str);
+			err = -3;
+		}
+
+		if (err)
+			break;
+
+		list = list->next;
+		id++;
+	}
+
+	return err;
+}
+
+
+/**
+ * Retrieves a new teamid and has the fields set from the tokenized line
+ *
+ * @param list The tokenized line representing a team from the flatf
+ * @return Negative on error
  */
 
 static int _create_team(struct _token *list)
