@@ -6,3 +6,5 @@ install_manifest.txt
 bin
 docs/doxygen
 cscope.out
+cscope.files
+tags
