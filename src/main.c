@@ -116,11 +116,13 @@ static int _check_installed_version(void)
  * 
  * @param argc Number of arguments, including called location (argv[0])
  * @param argv Vector of string arguments
+ * @param flatf_name A pointer to a string that will be set to the flatf
+ * file name. It does not need to be deallocated.
  */
 
-static int _process_args(int argc, char** argv)
+static int _process_args(int argc, char** argv, const char **flatf_name)
 {
-	int arg = 0;
+	int arg = 1;
 	int bExpectingParam = 0;	/* set if expecting a string after flag:
 					 * ex. -o string */
 
@@ -143,7 +145,16 @@ static int _process_args(int argc, char** argv)
 			return 1; /* exit program */
 		}
 
+		else {						/* assume it's the flatf name */
+			*flatf_name = argv[arg];
+		}
+
 		arg++; /* go to next argument */
+	}
+
+	if (!*flatf_name) {
+		fprintf(stderr, "No flatf name provided!\n");
+		return -2;
 	}
 
 	return 0;
@@ -167,8 +178,9 @@ static void _exit_handler(void)
 int main(int argc, char** argv)
 {
 	int error;
+	const char *flatf_name;
 
-	error = _process_args(argc, argv);
+	error = _process_args(argc, argv, &flatf_name);
 	if (error < 0) { 	/* error parsing arguments */
 		return -1;
 	}
@@ -183,7 +195,7 @@ int main(int argc, char** argv)
 
 	/* install our exit callback function */
 	atexit(_exit_handler);
-	flatf_read("test.txt");
+	flatf_read(flatf_name);
 
 	return 0;
 }
