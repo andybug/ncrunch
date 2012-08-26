@@ -110,54 +110,273 @@ static int _check_installed_version(void)
 }
 
 
+const char *flatf = NULL;
+
+
 
 /**
- * Handles the processing of flags and filenames passed to the program
- * 
- * @param argc Number of arguments, including called location (argv[0])
- * @param argv Vector of string arguments
- * @param flatf_name A pointer to a string that will be set to the flatf
- * file name. It does not need to be deallocated.
+ * @struct switch_handler
+ * @brief Maps a switch character (-x) to a function that handles it
+ *
+ * @var _switch
+ * The character that is read from the command line ('a' for switch -a)
+ *
+ * @var takes_arg
+ * True if the switch expects to receive the next argument as input
+ * (-f file.txt)
+ *
+ * @var handler
+ * The function that will be called when the switch is passed on the command line
+ * If takes_arg is set, the next argument will be passed in as a string to the handler
+ * (-f file.txt -> _f_switch_handler(str = file.txt))
  */
 
-static int _process_args(int argc, char** argv, const char **flatf_name)
+struct switch_handler {
+	char _switch;
+	unsigned char takes_arg;
+	void (*handler)(const char *);
+};
+
+
+
+
+
+/* prototypes for handler functions */
+
+static void _switch_version(const char *arg);
+static void _switch_flatf(const char *arg);
+
+
+
+/**
+ * The list of argument handlers
+ *
+ * This list maps each switch to its handler function
+ */
+
+static struct switch_handler handlers[] = {
+	{ ._switch = 'v', .takes_arg = 0, .handler = _switch_version },
+	{ ._switch = 'f', .takes_arg = 1, .handler = _switch_flatf },
+	{ ._switch =  0,  .takes_arg = 1, .handler = _switch_flatf },
+	{ ._switch = 27,  .takes_arg = 0, .handler = NULL } };
+
+
+/**
+ * Set to the switch_handler that is currently expecting a param
+ *
+ * If a switch handler has the takes_arg fields set and is called, the active_switch
+ * variable will point to that handler so that the next argument from the command
+ * line will be processed by the preceding switch's handler
+ */
+
+static struct switch_handler *active_switch = NULL;
+
+
+
+
+
+
+
+/**
+ * Handles the version switch and exits
+ */
+
+static void _switch_version(const char *arg)
+{
+	int major = NCRUNCH_VERSION_MAJOR;
+	int minor = NCRUNCH_VERSION_MINOR;
+
+
+	if (arg) {
+		fprintf(stderr, "%s: -v does not take an argument\n", __func__);
+		exit(EXIT_FAILURE);
+	}
+
+	if (NCRUNCH_RELEASE) {
+		printf("ncaacrunch v%d.%d", minor, major);
+		printf(" by Andrew Fields - 2012\n");
+	} else {
+		printf("ncaacrunch debug build: built %s %s\n", __DATE__, __TIME__);
+	}
+
+	exit(EXIT_SUCCESS);
+}
+
+
+/**
+ * Handles the flatf name switch/default case
+ */
+
+static void _switch_flatf(const char *arg)
+{
+	fprintf(stderr, "Not implemented yet!\n");
+	exit(EXIT_FAILURE);
+}
+
+
+/**
+ * Finds the handler that handles the switch given
+ */
+
+static struct switch_handler *_find_handler(char _switch)
+{
+	size_t i = 0;
+
+	while (handlers[i]._switch != 27) {
+		if (handlers[i]._switch == _switch)
+			return &handlers[i];
+		i++;
+	}
+
+	fprintf(stderr, "%s: '%c' is not a valid switch\n", __func__, _switch);
+	exit(EXIT_FAILURE);
+
+	return NULL;
+}
+
+
+/**
+ * Handles a simple switch (-a)
+ *
+ * Sets this switch to the active_switch if it expects an argument to follow,
+ * otherwise the handler for the switch is called
+ *
+ * @param _switch The single switch from the command line (-x)
+ */
+
+static void _process_single_switch(const char *_switch)
+{
+	struct switch_handler *handler;
+
+	handler = _find_handler(_switch[1]);
+
+	if (handler->takes_arg) {
+		active_switch = handler;
+	} else {
+		handler->handler(NULL);
+	}
+}
+
+
+/**
+ * Handles a switch that has multiple flags (-abc)
+ *
+ * Each switch in the chain is checked to ensure that they do not take an
+ * argument, then the handler for each is called
+ *
+ * @param _switch The switch chain from the command line
+ */
+
+static void _process_chained_switch(const char *_switch)
+{
+	struct switch_handler *handler;
+	const char *switchstr = &_switch[1];
+
+	while (*switchstr) {
+		handler = _find_handler(*switchstr);
+
+		if (handler->takes_arg) {
+			fprintf(stderr, "%s: can't chain switches that require arguments\n", __func__);
+			exit(EXIT_FAILURE);
+		}
+
+		handler->handler(NULL);
+		switchstr++;
+	}
+}
+
+
+/**
+ * Handles a data argument
+ *
+ * If there is an active switch (one that is waiting for a data argument), the
+ * handler for the active switch is called with str for its data. Otherwise,
+ * the default data handler is called (_find_handler(0))
+ *
+ * @param str The data argument
+ */
+
+static void _process_non_switch(const char *str)
+{
+	struct switch_handler *handler;
+
+	if (active_switch) {
+		/* if a switch is expecting an argument, give it to them */
+		active_switch->handler(str);
+		active_switch = NULL;
+	} else {
+		/* otherwise, call default handler */
+		handler = _find_handler(0);
+		handler->handler(str);
+	}
+}
+
+
+/**
+ * Handles the processing of a switch from the command line (e.g. -x)
+ *
+ * Determines whether the switch is chained (-abc) or single (-f), then calls
+ * the functions that handle these types
+ *
+ * @arg _switch The enite argument from the command line ("-abc")
+ */
+
+static void _process_switch(const char *_switch)
+{
+	size_t len;
+
+	if (active_switch) {
+		/* can't have another switch when expecting an argument */
+		fprintf(stderr, "%s: switch '%c' expected argument to follow\n", __func__, active_switch->_switch);
+		exit(EXIT_FAILURE);
+	}
+
+	len = strlen(_switch);
+
+	if (len > 2) {
+		/* more than one flag grouped together */
+		_process_chained_switch(_switch);
+	}
+ 
+	else if (len == 2) {
+		/* just one flag */
+		_process_single_switch(_switch);
+	}
+
+	else {
+		/* not valid */
+		fprintf(stderr, "WTF\n");
+		exit(EXIT_FAILURE);
+	}
+}
+
+
+/**
+ * Handles the processing of flags and file names passed to the program
+ *
+ * First determines if each arg is a switch or non-switch, then calls the 
+ * appropriate processing functions
+ *
+ * @param argc Number of arguments, including called location (argv[0])
+ * @param argv Vector of string arguments
+ */
+
+static void _process_args(int argc, char **argv)
 {
 	int arg = 1;
-	int bExpectingParam = 0;	/* set if expecting a string after flag:
-					 * ex. -o string */
 
 	while (arg < argc) {
-		if (argv[arg][0] == '-' && bExpectingParam) {
-			fprintf(stderr, "Unknown FIXME\n");
-			return -1;
+
+		if (argv[arg][0] == '-') {
+			_process_switch(argv[arg]);
 		}
 
-		if (strncmp(argv[arg], "-v", 2) == 0) {		/* print version info */
-			if (NCRUNCH_RELEASE) {
-				int major = NCRUNCH_VERSION_MAJOR;
-				int minor = NCRUNCH_VERSION_MINOR;
-				printf("ncaacrunch v%d.%d", minor, major);
-				printf(" by Andrew Fields - 2012\n");
-			}
-			else {
-				printf("ncaacrunch debug build: built %s %s\n", __DATE__, __TIME__);
-			}
-			return 1; /* exit program */
+		else {
+			_process_non_switch(argv[arg]);
 		}
 
-		else {						/* assume it's the flatf name */
-			*flatf_name = argv[arg];
-		}
-
-		arg++; /* go to next argument */
+		arg++;
 	}
-
-	if (!*flatf_name) {
-		fprintf(stderr, "No flatf name provided!\n");
-		return -2;
-	}
-
-	return 0;
 }
 
 
@@ -178,15 +397,8 @@ static void _exit_handler(void)
 int main(int argc, char** argv)
 {
 	int error;
-	const char *flatf_name;
 
-	error = _process_args(argc, argv, &flatf_name);
-	if (error < 0) { 	/* error parsing arguments */
-		return -1;
-	}
-	else if (error > 0) {	/* exit after print out */
-		return 0;
-	}
+	_process_args(argc, argv);
 
 	error = _check_installed_version();
 	if (error < 0) {
@@ -195,7 +407,7 @@ int main(int argc, char** argv)
 
 	/* install our exit callback function */
 	atexit(_exit_handler);
-	flatf_read(flatf_name);
+	flatf_read(flatf);
 
 	return 0;
 }
