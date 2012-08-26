@@ -25,14 +25,14 @@ SET (CMAKE_RANLIB  "/usr/bin/llvm-ranlib")
 
 
 
-project(ncaacrunch)
+project(ncrunch)
 
-set (ncaacrunch_VERSION_MAJOR 1)
-set (ncaacrunch_VERSION_MINOR 0)
+set (ncrunch_VERSION_MAJOR 1)
+set (ncrunch_VERSION_MINOR 0)
 
 
-SET (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${ncaacrunch_SOURCE_DIR}/bin)
-#INSTALL(TARGETS ncaacrunch DESTINATION ${ncaacrunch_SOURCE_DIR}/bin)
+SET (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${ncrunch_SOURCE_DIR}/bin)
+#INSTALL(TARGETS ncaacrunch DESTINATION ${ncrunch_SOURCE_DIR}/bin)
 
 
 add_subdirectory(src)

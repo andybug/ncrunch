@@ -201,12 +201,12 @@ static void _switch_version(const char *arg)
 		exit(EXIT_FAILURE);
 	}
 
-	if (NCRUNCH_RELEASE) {
-		printf("ncaacrunch v%d.%d", minor, major);
-		printf(" by Andrew Fields - 2012\n");
-	} else {
-		printf("ncaacrunch debug build: built %s %s\n", __DATE__, __TIME__);
-	}
+#if (NCRUNCH_RELEASE == 1)
+	printf("ncrunch v%d.%d", minor, major);
+	printf(" by Andrew Fields - 2012\n");
+#else
+	printf("ncrunch debug build: built %s %s\n", __DATE__, __TIME__);
+#endif
 
 	exit(EXIT_SUCCESS);
 }
