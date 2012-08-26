@@ -489,7 +489,7 @@ int flatf_read(const char *filename)
 
 	fd = _open_file(filename);
 	if (fd < 0) {
-		fprintf(stderr, "%s: could not open file %s\n", __func__, filename);
+		fprintf(stderr, "%s: could not open file '%s'\n", __func__, filename);
 		return -1;
 	}
 

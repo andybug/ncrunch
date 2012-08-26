@@ -110,7 +110,16 @@ static int _check_installed_version(void)
 }
 
 
-const char *flatf = NULL;
+
+
+
+/**
+ * The name of the flat file from the command line
+ *
+ * It can be set with either the -f flag or simply ncrunch [flatf]
+ */
+
+static const char *flatf_name = NULL;
 
 
 
@@ -209,8 +218,7 @@ static void _switch_version(const char *arg)
 
 static void _switch_flatf(const char *arg)
 {
-	fprintf(stderr, "Not implemented yet!\n");
-	exit(EXIT_FAILURE);
+	flatf_name = arg;
 }
 
 
@@ -407,7 +415,7 @@ int main(int argc, char** argv)
 
 	/* install our exit callback function */
 	atexit(_exit_handler);
-	flatf_read(flatf);
+	flatf_read(flatf_name);
 
 	return 0;
 }
