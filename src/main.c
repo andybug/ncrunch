@@ -73,13 +73,13 @@ static int _check_installed_version(void)
 	 */
 
 
-#if (NCRUNCH_DEBUG == 1)
+#ifdef NCRUNCH_DEBUG
 	if (release) {		/* release location but dev build */
 		fprintf(stderr, "%s: developer build running from release location\n", __func__);
 		return -2;
 	}
 
-#elif (NCRUNCH_RELEASE == 1)
+#elif defined NCRUNCH_RELEASE
 	if (!release) {		/* dev location but release build */
 		fprintf(stderr, "%s: release build running from developer location\n", __func__);
 		return -2;
@@ -201,7 +201,7 @@ static void _switch_version(const char *arg)
 		exit(EXIT_FAILURE);
 	}
 
-#if (NCRUNCH_RELEASE == 1)
+#ifdef NCRUNCH_RELEASE
 	printf("ncrunch v%d.%d", minor, major);
 	printf(" by Andrew Fields - 2012\n");
 #else
@@ -396,7 +396,7 @@ static void _process_args(int argc, char **argv)
 
 static void _exit_handler(void)
 {
-#if (NCRUNCH_DEBUG == 1)
+#ifdef NCRUNCH_DEBUG
 	teams_destroy();
 	tfl_destroy();
 #endif
