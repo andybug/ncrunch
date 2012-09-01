@@ -3,23 +3,18 @@
 
 #include <ncrunch/hash.h>
 
-
-
 #define NCRUNCH_VERSION_MAJOR 1
 #define NCRUNCH_VERSION_MINOR 0
-
-
 
 /**
  *
  */
 
 enum tfl_type {
-	TEAM_FIELD_INVALID = 0, /* this needs to be 0 (calloc initialized array) */
+	TEAM_FIELD_INVALID = 0,	/* this needs to be 0 (calloc initialized array) */
 	TEAM_FIELD_STRING,
 	TEAM_FIELD_DOUBLE
 };
-
 
 /**
  *
@@ -30,36 +25,27 @@ struct tfl_entry {
 	enum tfl_type type;
 };
 
-
 int tfl_create(size_t num_fields);
 size_t tfl_num_fields(void);
 int tfl_set_name(size_t id, const char *name);
 int tfl_set_type(size_t id, enum tfl_type type);
 const char *tfl_get_name(size_t id);
 enum tfl_type tfl_get_type(size_t id);
-int tfl_find(const char *name, size_t *id);
+int tfl_find(const char *name, size_t * id);
 
 int tfl_destroy(void);
 
-
-
-
-
-
 #define TEAMS_MAXTEAMS	64
 #define TEAMS_INVALID	TEAMS_MAXTEAMS
-
-
 
 /**
  *
  */
 
 union team_field {
-	char* data_s;
+	char *data_s;
 	double data_d;
 };
-
 
 /**
  *
@@ -80,7 +66,4 @@ size_t teams_num_teams(void);
 
 /* Functions for reading flat file that contains team data */
 
-
-int flatf_read(const char* filename);
-
-
+int flatf_read(const char *filename);

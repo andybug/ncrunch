@@ -6,19 +6,13 @@
 
 #include <ncrunch/ncrunch.h>
 
-
 #define TFL_MAXFIELDS  16
-
-
 
 static struct tfl_entry *tfl = NULL;
 static size_t num_fields = 0;
 
-
 static struct team teams[TEAMS_MAXTEAMS];
-static size_t num_teams = 0; 
-
-
+static size_t num_teams = 0;
 
 /**
  * Allocates the team field list for the specified number of fields
@@ -37,7 +31,6 @@ int tfl_create(size_t num_fields_)
 	return 0;
 }
 
-
 /**
  * Get the number of fields in the team field list
  */
@@ -46,7 +39,6 @@ size_t tfl_num_fields(void)
 {
 	return num_fields;
 }
-
 
 /**
  * Set the name of a field in the list
@@ -65,7 +57,6 @@ int tfl_set_name(size_t id, const char *name)
 	return 0;
 }
 
-
 /**
  * Set the type of a field in the list
  *
@@ -83,7 +74,6 @@ int tfl_set_type(size_t id, enum tfl_type type)
 	return 0;
 }
 
-
 /**
  * Get the name of a field
  *
@@ -98,7 +88,6 @@ const char *tfl_get_name(size_t id)
 
 	return tfl[id].name;
 }
-
 
 /**
  * Get the type of a field
@@ -115,7 +104,6 @@ enum tfl_type tfl_get_type(size_t id)
 	return tfl[id].type;
 }
 
-
 /**
  * Locates a field by name
  *
@@ -124,7 +112,7 @@ enum tfl_type tfl_get_type(size_t id)
  * @return Negative if field not found
  */
 
-int tfl_find(const char *name, size_t *id)
+int tfl_find(const char *name, size_t * id)
 {
 	size_t i;
 
@@ -138,7 +126,6 @@ int tfl_find(const char *name, size_t *id)
 
 	return -1;
 }
-
 
 /**
  * Cleans up the allocations made for the team field list
@@ -160,7 +147,6 @@ int tfl_destroy(void)
 	return 0;
 }
 
-
 /**
  * Adds a team to the team list
  * 
@@ -173,7 +159,8 @@ size_t team_create(void)
 	size_t id = num_teams;
 
 	if (num_teams >= TEAMS_MAXTEAMS) {
-		fprintf(stderr, "%s: Too many teams! Max: %d\n", __func__, TEAMS_MAXTEAMS);
+		fprintf(stderr, "%s: Too many teams! Max: %d\n", __func__,
+			TEAMS_MAXTEAMS);
 		return TEAMS_INVALID;
 	}
 
@@ -183,7 +170,6 @@ size_t team_create(void)
 	num_teams++;
 	return id;
 }
-
 
 /**
  * Cleans up the allocations for the team
@@ -215,7 +201,6 @@ int team_destroy(size_t id)
 	return 0;
 }
 
-
 /**
  * Destroys each team that has been created
  *
@@ -238,7 +223,6 @@ int teams_destroy(void)
 	return 0;
 }
 
-
 /**
  * Get the number of teams
  */
@@ -247,7 +231,6 @@ size_t teams_num_teams(void)
 {
 	return num_teams;
 }
-
 
 /**
  * Sets a field in a team to a string value.
@@ -275,17 +258,15 @@ int team_set_string(size_t id, size_t field, const char *str)
 	if (type == TEAM_FIELD_INVALID) {
 		fprintf(stderr, "%s: invalid field id %lu\n", __func__, field);
 		return -2;
-	}
-
-	else if (type == TEAM_FIELD_DOUBLE) {
-		fprintf(stderr, "%s: trying to write string to double field\n", __func__);
+	} else if (type == TEAM_FIELD_DOUBLE) {
+		fprintf(stderr, "%s: trying to write string to double field\n",
+			__func__);
 		return -3;
 	}
 
 	team->fields[field].data_s = strdup(str);
 	return 0;
 }
-
 
 /**
  * Sets a field in a team to a double value
@@ -312,14 +293,12 @@ int team_set_double(size_t id, size_t field, double val)
 	if (type == TEAM_FIELD_INVALID) {
 		fprintf(stderr, "%s: invalid field id %lu\n", __func__, field);
 		return -2;
-	}
-
-	else if (type == TEAM_FIELD_STRING) {
-		fprintf(stderr, "%s: trying to write double to string field\n", __func__);
+	} else if (type == TEAM_FIELD_STRING) {
+		fprintf(stderr, "%s: trying to write double to string field\n",
+			__func__);
 		return -3;
 	}
 
 	team->fields[field].data_d = val;
 	return 0;
 }
-

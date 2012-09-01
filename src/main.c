@@ -7,9 +7,6 @@
 
 #include <ncrunch/ncrunch.h>
 
-
-
-
 /**
  * @struct switch_handler
  * @brief Maps a switch character (-x) to a function that handles it
@@ -30,19 +27,13 @@
 struct switch_handler {
 	char _switch;
 	unsigned char takes_arg;
-	void (*handler)(const char *);
+	void (*handler) (const char *);
 };
-
-
-
-
 
 /* prototypes for handler functions */
 
 static void _switch_version(const char *arg);
 static void _switch_flatf(const char *arg);
-
-
 
 /**
  * The list of argument handlers
@@ -51,11 +42,11 @@ static void _switch_flatf(const char *arg);
  */
 
 static struct switch_handler handlers[] = {
-	{ ._switch = 'v', .takes_arg = 0, .handler = _switch_version },
-	{ ._switch = 'f', .takes_arg = 1, .handler = _switch_flatf },
-	{ ._switch =  0,  .takes_arg = 1, .handler = _switch_flatf },
-	{ ._switch = 27,  .takes_arg = 0, .handler = NULL } };
-
+	{._switch = 'v',.takes_arg = 0,.handler = _switch_version},
+	{._switch = 'f',.takes_arg = 1,.handler = _switch_flatf},
+	{._switch = 0,.takes_arg = 1,.handler = _switch_flatf},
+	{._switch = 27,.takes_arg = 0,.handler = NULL}
+};
 
 /**
  * Set to the switch_handler that is currently expecting a param
@@ -67,7 +58,6 @@ static struct switch_handler handlers[] = {
 
 static struct switch_handler *active_switch = NULL;
 
-
 /**
  * The name of the flat file from the command line
  *
@@ -75,12 +65,6 @@ static struct switch_handler *active_switch = NULL;
  */
 
 static const char *flatf_name = NULL;
-
-
-
-
-
-
 
 /**
  * Handles the version switch and exits
@@ -92,7 +76,6 @@ static void _switch_version(const char *arg)
 		fprintf(stderr, "%s: -v does not take an argument\n", __func__);
 		exit(EXIT_FAILURE);
 	}
-
 #ifdef NCRUNCH_RELEASE
 	int major = NCRUNCH_VERSION_MAJOR;
 	int minor = NCRUNCH_VERSION_MINOR;
@@ -106,7 +89,6 @@ static void _switch_version(const char *arg)
 	exit(EXIT_SUCCESS);
 }
 
-
 /**
  * Handles the flatf name switch/default case
  */
@@ -115,7 +97,6 @@ static void _switch_flatf(const char *arg)
 {
 	flatf_name = arg;
 }
-
 
 /**
  * Finds the handler that handles the switch given
@@ -136,7 +117,6 @@ static struct switch_handler *_find_handler(char _switch)
 
 	return NULL;
 }
-
 
 /**
  * Handles a simple switch (-a)
@@ -160,7 +140,6 @@ static void _process_single_switch(const char *_switch)
 	}
 }
 
-
 /**
  * Handles a switch that has multiple flags (-abc)
  *
@@ -179,7 +158,9 @@ static void _process_chained_switch(const char *_switch)
 		handler = _find_handler(*switchstr);
 
 		if (handler->takes_arg) {
-			fprintf(stderr, "%s: can't chain switches that require arguments\n", __func__);
+			fprintf(stderr,
+				"%s: can't chain switches that require arguments\n",
+				__func__);
 			exit(EXIT_FAILURE);
 		}
 
@@ -187,7 +168,6 @@ static void _process_chained_switch(const char *_switch)
 		switchstr++;
 	}
 }
-
 
 /**
  * Handles a data argument
@@ -214,7 +194,6 @@ static void _process_non_switch(const char *str)
 	}
 }
 
-
 /**
  * Handles the processing of a switch from the command line (e.g. -x)
  *
@@ -230,7 +209,8 @@ static void _process_switch(const char *_switch)
 
 	if (active_switch) {
 		/* can't have another switch when expecting an argument */
-		fprintf(stderr, "%s: switch '%c' expected argument to follow\n", __func__, active_switch->_switch);
+		fprintf(stderr, "%s: switch '%c' expected argument to follow\n",
+			__func__, active_switch->_switch);
 		exit(EXIT_FAILURE);
 	}
 
@@ -239,20 +219,15 @@ static void _process_switch(const char *_switch)
 	if (len > 2) {
 		/* more than one flag grouped together */
 		_process_chained_switch(_switch);
-	}
- 
-	else if (len == 2) {
+	} else if (len == 2) {
 		/* just one flag */
 		_process_single_switch(_switch);
-	}
-
-	else {
+	} else {
 		/* not valid */
 		fprintf(stderr, "WTF\n");
 		exit(EXIT_FAILURE);
 	}
 }
-
 
 /**
  * Handles the processing of flags and file names passed to the program
@@ -272,16 +247,13 @@ static void _process_args(int argc, char **argv)
 
 		if (argv[arg][0] == '-') {
 			_process_switch(argv[arg]);
-		}
-
-		else {
+		} else {
 			_process_non_switch(argv[arg]);
 		}
 
 		arg++;
 	}
 }
-
 
 /**
  * Callback for the atexit() function, cleans up allocations
@@ -297,7 +269,7 @@ static void _exit_handler(void)
 #endif
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 	int error;
 
@@ -309,4 +281,3 @@ int main(int argc, char** argv)
 
 	return error;
 }
-

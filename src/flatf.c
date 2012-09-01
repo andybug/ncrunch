@@ -10,14 +10,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-
 #include <ncrunch/ncrunch.h>
 
-
-
 #define FLATF_READBUFSIZE 256
-
-
 
 /**
  * Opens a file and returns the file descriptor, or a negative to indicate 
@@ -26,19 +21,18 @@
  * @return Negative if error
  */
 
-static int _open_file(const char* filename)
+static int _open_file(const char *filename)
 {
 	int fd;
 
 	fd = open(filename, O_RDONLY);
-	if (fd < 0) {	/* error */
+	if (fd < 0) {		/* error */
 		/* TODO: get error from errno and put in nice print outs */
 		return -1;
 	}
 
 	return fd;
 }
-
 
 /**
  * Simply closes a file...
@@ -52,14 +46,13 @@ static int _close_file(int fd)
 
 	err = close(fd);
 	if (err) {
-		exit(-1); /* just die for now... */
+		exit(-1);	/* just die for now... */
 		/* TODO: error checking */
 		return -1;
 	}
 
 	return 0;
 }
-
 
 /**
  * Reads a line from the flat file and returns the number of characters read
@@ -72,7 +65,7 @@ static int _close_file(int fd)
  * @return The number of characters read into the buffer
  */
 
-static size_t _read_line(int fd, char* buffer)
+static size_t _read_line(int fd, char *buffer)
 {
 	size_t count = 0;
 	char c;
@@ -80,23 +73,22 @@ static size_t _read_line(int fd, char* buffer)
 	while (read(fd, &c, 1)) {
 
 		if (count == FLATF_READBUFSIZE) {	/* line won't fit in buffer */
-			fprintf(stderr, "%s: Line too long for buffer!\n", __func__);
+			fprintf(stderr, "%s: Line too long for buffer!\n",
+				__func__);
 			return 0;
 		}
 
 		if (c == '\n') {	/* line is over, null-term. the string */
 			buffer[count] = '\0';
 			break;
-		}
-		else {
+		} else {
 			buffer[count] = c;
 			count++;
 		}
 	}
-			
+
 	return count;
 }
-
 
 /**
  * A token from the current line in the buffer
@@ -109,7 +101,6 @@ struct token {
 	struct token *next;
 };
 
-
 /**
  * Contains a list of tokens from a line in the flatf
  *
@@ -121,7 +112,6 @@ struct tokenlist {
 	struct token *head;
 	size_t num_tokens;
 };
-
 
 /**
  * Tokenizes the line contained in a buffer into a token list
@@ -139,7 +129,7 @@ struct tokenlist {
  * @return The number of characters read, not including the null terminator
  */
 
-static size_t _tokenize_line(char* buffer, struct tokenlist *list)
+static size_t _tokenize_line(char *buffer, struct tokenlist *list)
 {
 	struct token *token = NULL;
 	size_t count = 0;
@@ -147,7 +137,6 @@ static size_t _tokenize_line(char* buffer, struct tokenlist *list)
 
 	/* go ahead and reset the list, they better have deallocated! */
 	memset(list, 0, sizeof(struct tokenlist));
-
 
 	str = strtok(buffer, "\t");
 
@@ -171,7 +160,6 @@ static size_t _tokenize_line(char* buffer, struct tokenlist *list)
 	return count;
 }
 
-
 /**
  * Deallocates the tokens in a token list
  */
@@ -190,7 +178,6 @@ static void _deallocate_tokens(struct tokenlist *list)
 	list->head = NULL;
 	list->num_tokens = 0;
 }
-
 
 /**
  * Reads the first line of the flat file and adds each heading as a field in the
@@ -218,12 +205,12 @@ static size_t _read_fields_list(int fd, char *buf)
 	num_tokens = _tokenize_line(buf, &list);
 	if (!num_tokens) {
 		/* not formatted correctly */
-		fprintf(stderr, "%s: fields line incorrectly formatted\n", __func__);
+		fprintf(stderr, "%s: fields line incorrectly formatted\n",
+			__func__);
 		_deallocate_tokens(&list);
 		return 0;
 	}
 
-	
 	tfl_create(num_tokens);
 	token = list.head;
 
@@ -233,9 +220,8 @@ static size_t _read_fields_list(int fd, char *buf)
 	}
 
 	_deallocate_tokens(&list);
-	return num_tokens;	
+	return num_tokens;
 }
-
 
 #if 0
 /**
@@ -253,7 +239,8 @@ static const char *_get_team_name(struct _token *list)
 
 	err = tfl_find("name", &nameid);
 	if (err) {
-		fprintf(stderr, "%s: could not find required 'name' field\n", __func__);
+		fprintf(stderr, "%s: could not find required 'name' field\n",
+			__func__);
 		return NULL;
 	}
 
@@ -264,7 +251,6 @@ static const char *_get_team_name(struct _token *list)
 	return list->str;
 }
 #endif
-
 
 /**
  * Checks whether a string consists only of alpha characters
@@ -286,7 +272,6 @@ static int _isAlpha(const char *str)
 	return 1;
 }
 
-
 /**
  * Returns whether a string consists only of numbers
  *
@@ -307,7 +292,6 @@ static int _isNumeric(const char *str)
 	return 1;
 }
 
-
 /**
  * Sets a team's field to a string value
  *
@@ -322,9 +306,9 @@ static int _set_alpha_field(size_t teamid, size_t fieldid, const char *str)
 	enum tfl_type type = tfl_get_type(fieldid);
 
 	if (type == TEAM_FIELD_DOUBLE) {
-		fprintf(stderr, "%s: token '%s' is not numeric!\n", __func__, str);
+		fprintf(stderr, "%s: token '%s' is not numeric!\n", __func__,
+			str);
 		return -1;
-
 	} else if (type == TEAM_FIELD_INVALID) {
 		tfl_set_type(fieldid, TEAM_FIELD_STRING);
 	}
@@ -333,7 +317,6 @@ static int _set_alpha_field(size_t teamid, size_t fieldid, const char *str)
 
 	return 0;
 }
-
 
 /**
  * Sets a team's field to a double value
@@ -344,15 +327,15 @@ static int _set_alpha_field(size_t teamid, size_t fieldid, const char *str)
  * @return Negative on error
  */
 
-static int  _set_numeric_field(size_t teamid, size_t fieldid, const char *str)
+static int _set_numeric_field(size_t teamid, size_t fieldid, const char *str)
 {
 	double conv;
 	enum tfl_type type = tfl_get_type(fieldid);
 
 	if (type == TEAM_FIELD_STRING) {
-		fprintf(stderr, "%s: token '%s' is not alpha!\n", __func__, str);
+		fprintf(stderr, "%s: token '%s' is not alpha!\n", __func__,
+			str);
 		return -2;
-
 	} else if (type == TEAM_FIELD_INVALID) {
 		tfl_set_type(fieldid, TEAM_FIELD_DOUBLE);
 	}
@@ -362,7 +345,6 @@ static int  _set_numeric_field(size_t teamid, size_t fieldid, const char *str)
 
 	return 0;
 }
-
 
 /**
  * Sets a team's field values from the tokenized field listing
@@ -381,12 +363,11 @@ static int _set_fields(const struct tokenlist *list, size_t teamid)
 	while (token) {
 		if (_isAlpha(token->str)) {
 			err = _set_alpha_field(teamid, id, token->str);
-		} 
-		else if (_isNumeric(token->str)) {
+		} else if (_isNumeric(token->str)) {
 			err = _set_numeric_field(teamid, id, token->str);
-		}
-		else {
-			fprintf(stderr, "%s: illegal value '%s'\n", __func__, token->str);
+		} else {
+			fprintf(stderr, "%s: illegal value '%s'\n", __func__,
+				token->str);
 			err = -3;
 		}
 
@@ -400,7 +381,6 @@ static int _set_fields(const struct tokenlist *list, size_t teamid)
 	return err;
 }
 
-
 /**
  * Retrieves a new teamid and has the fields set from the tokenized line
  *
@@ -413,7 +393,6 @@ static int _create_team(const struct tokenlist *list)
 	int err;
 	size_t teamid;
 
-
 	teamid = team_create();
 	if (teamid == TEAMS_INVALID) {
 		fprintf(stderr, "%s: unable to create team\n", __func__);
@@ -422,13 +401,13 @@ static int _create_team(const struct tokenlist *list)
 
 	err = _set_fields(list, teamid);
 	if (err) {
-		fprintf(stderr, "%s: unable to read field for team\n", __func__);
+		fprintf(stderr, "%s: unable to read field for team\n",
+			__func__);
 		return -3;
 	}
 
 	return 0;
 }
-
 
 /**
  * Reads a line from the file and interprets it as team data.
@@ -454,7 +433,8 @@ static size_t _read_team(int fd, char *buf)
 
 	num_tokens = _tokenize_line(buf, &list);
 	if (num_tokens != toread) {
-		fprintf(stderr, "%s: team only has %lu/%lu fields\n", __func__, num_tokens, toread);
+		fprintf(stderr, "%s: team only has %lu/%lu fields\n", __func__,
+			num_tokens, toread);
 		_deallocate_tokens(&list);
 		return (num_tokens - toread);
 	}
@@ -468,7 +448,6 @@ static size_t _read_team(int fd, char *buf)
 	_deallocate_tokens(&list);
 	return 0;
 }
-
 
 /**
  * Reads the flat file; The first line of the file is interpreted as the field list
@@ -486,10 +465,10 @@ int flatf_read(const char *filename)
 	size_t count;
 	size_t diff;
 
-
 	fd = _open_file(filename);
 	if (fd < 0) {
-		fprintf(stderr, "%s: could not open file '%s'\n", __func__, filename);
+		fprintf(stderr, "%s: could not open file '%s'\n", __func__,
+			filename);
 		return -1;
 	}
 
@@ -503,9 +482,7 @@ int flatf_read(const char *filename)
 		diff = _read_team(fd, buf);
 	} while (!diff);
 
-
 	_close_file(fd);
 
 	return 0;
 }
-
