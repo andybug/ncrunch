@@ -116,8 +116,10 @@ size_t team_create(void);
 void team_destroy(size_t id);
 int team_set_string(size_t id, size_t field, const char *str);
 int team_set_double(size_t id, size_t field, double val);
-void teams_destroy(void);
+const char *team_get_string(size_t id, size_t field);
+double team_get_double(size_t id, size_t field);
 size_t teams_num_teams(void);
+void teams_destroy(void);
 
 /******************************************************************************
  * FLAT FILE FUNCTIONS
@@ -126,5 +128,9 @@ size_t teams_num_teams(void);
 
 int flatf_read(const char *filename);
 
-int algo_exec(const char *script);
+/******************************************************************************
+ * ALGORITHM FUNCTIONS
+ ******************************************************************************
+ */
 
+int algo_exec(const char *script);

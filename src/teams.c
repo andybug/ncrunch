@@ -324,3 +324,71 @@ int team_set_double(size_t id, size_t field, double val)
 	team->fields[field].data_d = val;
 	return 0;
 }
+
+
+/**
+ * Returns the string value of the specified field
+ *
+ * The returned string must not be modified!
+ * @param id The team's id
+ * @param field the field's id
+ * @return The string value of the field
+ */
+
+const char *team_get_string(size_t id, size_t field)
+{
+	struct team *team;
+	enum tfl_type type;
+
+	if (id >= num_teams) {
+		fprintf(stderr, "%s: id %lu out of range\n", __func__, id);
+		return NULL;
+	}
+
+	team = &teams[id];
+	type = tfl_get_type(field);
+
+	if (type == TEAM_FIELD_INVALID) {
+		fprintf(stderr, "%s: invalid field id %lu\n", __func__, field);
+		return NULL;
+	} else if (type == TEAM_FIELD_DOUBLE) {
+		fprintf(stderr, "%s: tried to read string from double field\n",
+			__func__);
+		return NULL;
+	}
+
+	return team->fields[field].data_s;
+}
+
+/**
+ * Returns the double value of the specified field
+ *
+ * @param id The team's id
+ * @param field the field's id
+ * @return The double value of the field
+ */
+
+double team_get_double(size_t id, size_t field)
+{
+	struct team *team;
+	enum tfl_type type;
+
+	if (id >= num_teams) {
+		fprintf(stderr, "%s: id %lu out of range\n", __func__, id);
+		return -1.0;
+	}
+
+	team = &teams[id];
+	type = tfl_get_type(field);
+
+	if (type == TEAM_FIELD_INVALID) {
+		fprintf(stderr, "%s: invalid field id %lu\n", __func__, field);
+		return -1.0;
+	} else if (type == TEAM_FIELD_STRING) {
+		fprintf(stderr, "%s: tried to read double from string field\n",
+			__func__);
+		return -1.0;
+	}
+
+	return team->fields[field].data_d;
+}
