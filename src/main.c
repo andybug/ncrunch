@@ -286,7 +286,13 @@ int main(int argc, char **argv)
 
 	/* install our exit callback function */
 	atexit(_exit_handler);
+
 	error = flatf_read(flatf_name);
+	if (error < 0) {
+		return -1;
+	}
+
+	error = algo_exec("algo.lua");
 
 	return error;
 }

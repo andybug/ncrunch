@@ -3,6 +3,6 @@ project(ncrunch)
 
 include_directories(include)
 
-add_executable(ncrunch main.c hash.c flatf.c teams.c)
-target_link_libraries(ncrunch ssl)
+add_executable(ncrunch main.c hash.c flatf.c teams.c algo.c)
+target_link_libraries(ncrunch ssl lua5.2)
 

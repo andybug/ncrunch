@@ -125,3 +125,6 @@ size_t teams_num_teams(void);
  */
 
 int flatf_read(const char *filename);
+
+int algo_exec(const char *script);
+
