@@ -133,9 +133,15 @@ int tfl_find(const char *name, size_t * id)
  * DEBUG only
  */
 
-int tfl_destroy(void)
+void tfl_destroy(void)
 {
 	size_t i;
+
+	if (!tfl) {
+		/* not allocated */
+		num_fields = 0;
+		return;
+	}
 
 	for (i = 0; i < num_fields; i++) {
 		free(tfl[i].name);
@@ -144,7 +150,6 @@ int tfl_destroy(void)
 	free(tfl);
 	tfl = NULL;
 	num_fields = 0;
-	return 0;
 }
 
 /**
@@ -178,14 +183,14 @@ size_t team_create(void)
  * Does not remove the team from the teams list
  */
 
-int team_destroy(size_t id)
+void team_destroy(size_t id)
 {
 	struct team *team;
 	size_t i;
 
 	if (id >= num_teams) {
 		fprintf(stderr, "%s: id %lu out of range\n", __func__, id);
-		return -1;
+		return;
 	}
 
 	team = &teams[id];
@@ -197,8 +202,6 @@ int team_destroy(size_t id)
 
 	free(team->fields);
 	memset(team, 0, sizeof(struct team));
-
-	return 0;
 }
 
 /**
@@ -207,20 +210,16 @@ int team_destroy(size_t id)
  * DEBUG only
  */
 
-int teams_destroy(void)
+void teams_destroy(void)
 {
 	size_t id;
-	int err;
 
 	for (id = 0; id < num_teams; id++) {
-		err = team_destroy(id);
-
-		if (err)
-			return -1;
+		team_destroy(id);
 	}
 
+	num_teams = 0;
 	printf("Destroyed %lu team(s)\n", id);
-	return 0;
 }
 
 /**

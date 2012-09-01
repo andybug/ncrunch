@@ -33,7 +33,7 @@ const char *tfl_get_name(size_t id);
 enum tfl_type tfl_get_type(size_t id);
 int tfl_find(const char *name, size_t * id);
 
-int tfl_destroy(void);
+void tfl_destroy(void);
 
 #define TEAMS_MAXTEAMS	64
 #define TEAMS_INVALID	TEAMS_MAXTEAMS
@@ -57,11 +57,11 @@ struct team {
 };
 
 size_t team_create(void);
-int team_destroy(size_t id);
+void team_destroy(size_t id);
 int team_set_string(size_t id, size_t field, const char *str);
 int team_set_double(size_t id, size_t field, double val);
 
-int teams_destroy(void);
+void teams_destroy(void);
 size_t teams_num_teams(void);
 
 /* Functions for reading flat file that contains team data */
