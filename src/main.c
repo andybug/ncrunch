@@ -43,16 +43,19 @@ struct switch_handler {
 
 static void _switch_version(const char *arg);
 static void _switch_flatf(const char *arg);
+static void _switch_algo(const char *arg);
 
 /**
  * @brief The list of argument handlers
  *
- * This list maps each switch to its handler function
+ * This list maps each switch to its handler function. Switch '0' is the default
+ * handler if no switch is given.
  */
 
 static struct switch_handler handlers[] = {
 	{._switch = 'v',.takes_arg = 0,.handler = _switch_version},
 	{._switch = 'f',.takes_arg = 1,.handler = _switch_flatf},
+	{._switch = 'a',.takes_arg = 1,.handler = _switch_algo},
 	{._switch = 0,.takes_arg = 1,.handler = _switch_flatf},
 	{._switch = 27,.takes_arg = 0,.handler = NULL}
 };
@@ -74,6 +77,14 @@ static struct switch_handler *active_switch = NULL;
  */
 
 static const char *flatf_name = NULL;
+
+/**
+ * @brief The name of the algo Lua file to execute
+ *
+ * It is set with the -a flag
+ */
+
+static const char *algo_name = NULL;
 
 /**
  * @brief Handles the version switch and exits
@@ -106,6 +117,16 @@ static void _switch_flatf(const char *arg)
 {
 	flatf_name = arg;
 }
+
+/**
+ * @brief Handles the algo name switch
+ */
+
+static void _switch_algo(const char *arg)
+{
+	algo_name = arg;
+}
+
 
 /**
  * @brief Finds the handler that handles the switch given
@@ -292,7 +313,7 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	error = algo_exec("algo.lua");
+	error = algo_exec(algo_name);
 
 	return error;
 }
