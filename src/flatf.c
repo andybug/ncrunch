@@ -71,7 +71,8 @@ static int _close_file(int fd)
  * - Reads until a newline is encountered
  * - A null-terminator is added to the end of the string
  * - The max number of chars that can be read is therefore (len - 1)
- * 
+ *
+ * @param fd The file descriptor for the open flat file 
  * @param buffer The buffer that is to be read into
  * @return The number of characters read into the buffer
  * @retval 0 The line is too big for the buffer
@@ -282,7 +283,7 @@ static const char *_get_team_name(struct _token *list)
  * retval 0 The string contains digits
  * retval 1 The string contains only letters
  *
- * @remarks The function is equivalent to /^[A-Za-z.\s]*$/
+ * @remarks The function is equivalent to /^[A-Za-z. ]*$/
  */
 
 static int _isAlpha(const char *str)

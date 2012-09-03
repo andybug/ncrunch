@@ -19,7 +19,7 @@
  *
  * @param str The input string
  * @param len The length of the string; if 0 is passed, length will be determined
- * @param digest The resulting message digest
+ * @param md The resulting message digest
  */
 
 void hash_string(const char *str, size_t len, struct mdigest *md)
