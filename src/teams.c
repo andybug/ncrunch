@@ -1,4 +1,14 @@
 
+/**
+ * @file teams.c
+ * @author Andrew Fields
+ *
+ * This file contains all of the controlling functions for the team fields list
+ * (aka tfl) and the teams list. The functions are declared in ncrunch.h.
+ *
+ * @see ncrunch.h
+ */
+
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
@@ -15,9 +25,9 @@ static struct team teams[TEAMS_MAXTEAMS];
 static size_t num_teams = 0;
 
 /**
- * Allocates the team field list for the specified number of fields
+ * @brief Allocates the team field list for the specified number of fields
  *
- * @return Negative on error
+ * @retval 0 Success
  */
 
 int tfl_create(size_t num_fields_)
@@ -32,7 +42,7 @@ int tfl_create(size_t num_fields_)
 }
 
 /**
- * Get the number of fields in the team field list
+ * @brief Get the number of fields in the team field list
  */
 
 size_t tfl_num_fields(void)
@@ -41,11 +51,13 @@ size_t tfl_num_fields(void)
 }
 
 /**
- * Set the name of a field in the list
+ * @brief Set the name of a field in the list
  *
  * @param id The id of the field
  * @param name The name for the field (Copied)
  * @return Negative on error
+ * @retval 0 Success
+ * @retval -1 Failure
  */
 
 int tfl_set_name(size_t id, const char *name)
@@ -58,11 +70,13 @@ int tfl_set_name(size_t id, const char *name)
 }
 
 /**
- * Set the type of a field in the list
+ * @brief Set the type of a field in the list
  *
  * @param id The id of the field
  * @param type The type to set the field to
  * @return Negative on error
+ * @retval 0 Success
+ * @retval -1 Failure
  */
 
 int tfl_set_type(size_t id, enum tfl_type type)
@@ -75,10 +89,12 @@ int tfl_set_type(size_t id, enum tfl_type type)
 }
 
 /**
- * Get the name of a field
+ * @brief Get the name of a field
  *
  * @param id The field's id
- * @return Returns a const* to the field's name. DO NOT MODIFY
+ * @return Returns a const* to the field's name. The returned string should
+ * not be modified. The string should not be free'd.
+ * @retval NULL Failure
  */
 
 const char *tfl_get_name(size_t id)
@@ -90,10 +106,11 @@ const char *tfl_get_name(size_t id)
 }
 
 /**
- * Get the type of a field
+ * @brief Get the type of a field
  *
  * @param id The field's id
  * @return The type of the field
+ * @retval TEAM_FIELD_INVALID Error
  */
 
 enum tfl_type tfl_get_type(size_t id)
@@ -105,11 +122,13 @@ enum tfl_type tfl_get_type(size_t id)
 }
 
 /**
- * Locates a field by name
+ * @brief Locates a field by name
  *
  * @param name The name to match to a field name
  * @param id The id of a match, will be set if one is found
  * @return Negative if field not found
+ * @retval 0 Success
+ * @retval -1 Failure
  */
 
 int tfl_find(const char *name, size_t * id)
@@ -128,9 +147,9 @@ int tfl_find(const char *name, size_t * id)
 }
 
 /**
- * Cleans up the allocations made for the team field list
+ * @brief Cleans up the allocations made for the team field list
  *
- * DEBUG only
+ * @attention Debug purposes only. This is used for Valgrind testing.
  */
 
 void tfl_destroy(void)
@@ -153,9 +172,10 @@ void tfl_destroy(void)
 }
 
 /**
- * Adds a team to the team list
+ * @brief Adds a team to the team list
  * 
- * @return Returns the id of the created team or TEAMS_INVALID on error
+ * @return Returns the id of the created team
+ * @retval TEAMS_INVALID Error
  */
 
 size_t team_create(void)
@@ -177,10 +197,9 @@ size_t team_create(void)
 }
 
 /**
- * Cleans up the allocations for the team
+ * @brief Cleans up the allocations for the team
  *
- * DEBUG only
- * Does not remove the team from the teams list
+ * @attention Debug purposes only. Does not remove the team from the teams list.
  */
 
 void team_destroy(size_t id)
@@ -205,9 +224,9 @@ void team_destroy(size_t id)
 }
 
 /**
- * Destroys each team that has been created
+ * @brief Destroys each team that has been created
  *
- * DEBUG only
+ * @attention For debug purposes only.
  */
 
 void teams_destroy(void)
@@ -223,7 +242,7 @@ void teams_destroy(void)
 }
 
 /**
- * Get the number of teams
+ * @brief Get the number of teams
  */
 
 size_t teams_num_teams(void)
@@ -232,13 +251,15 @@ size_t teams_num_teams(void)
 }
 
 /**
- * Sets a field in a team to a string value.
+ * @brief Sets a field in a team to a string value.
  *
- * The string is copied.
+ * @attention The string is copied.
  * @param id The team's id
  * @param field The field's id
  * @param str The string to be copied into the field
  * @return Returns negative on error
+ * @retval 0 Success
+ * @retval -1 Failure
  */
 
 int team_set_string(size_t id, size_t field, const char *str)
@@ -256,11 +277,11 @@ int team_set_string(size_t id, size_t field, const char *str)
 
 	if (type == TEAM_FIELD_INVALID) {
 		fprintf(stderr, "%s: invalid field id %lu\n", __func__, field);
-		return -2;
+		return -1;
 	} else if (type == TEAM_FIELD_DOUBLE) {
 		fprintf(stderr, "%s: trying to write string to double field\n",
 			__func__);
-		return -3;
+		return -1;
 	}
 
 	team->fields[field].data_s = strdup(str);
@@ -268,12 +289,14 @@ int team_set_string(size_t id, size_t field, const char *str)
 }
 
 /**
- * Sets a field in a team to a double value
+ * @brief Sets a field in a team to a double value
  *
  * @param id The team's id
  * @param field The field's id
  * @param val The value to set the field to
  * @return Returns negative on error
+ * @retval 0 Success
+ * @retval -1 Failure
  */
 
 int team_set_double(size_t id, size_t field, double val)
@@ -291,11 +314,11 @@ int team_set_double(size_t id, size_t field, double val)
 
 	if (type == TEAM_FIELD_INVALID) {
 		fprintf(stderr, "%s: invalid field id %lu\n", __func__, field);
-		return -2;
+		return -1;
 	} else if (type == TEAM_FIELD_STRING) {
 		fprintf(stderr, "%s: trying to write double to string field\n",
 			__func__);
-		return -3;
+		return -1;
 	}
 
 	team->fields[field].data_d = val;
