@@ -1,4 +1,12 @@
 
+/**
+ * @file hash.c
+ * @author Andrew Fields
+ *
+ * Contains the hashing functions used by the program. Currently, the hashing
+ * algorithm in use is SHA256, which is provided by Open SSL.
+ */
+
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
@@ -7,7 +15,7 @@
 #include <ncrunch/hash.h>
 
 /**
- * Hashes a string into the digest
+ * @brief Hashes a string into the digest
  *
  * @param str The input string
  * @param len The length of the string; if 0 is passed, length will be determined
@@ -24,7 +32,7 @@ void hash_string(const char *str, size_t len, struct mdigest *md)
 }
 
 /**
- * Hashes a string, ignoring case
+ * @brief Hashes a string, ignoring case
  *
  * @param str The string to be hashed
  * @param md The resulting message digest
@@ -47,7 +55,13 @@ void hash_stringi(const char *str, struct mdigest *md)
 }
 
 /**
- * Prints the message digest to stdout in hex form [0-9][a-f]. No new line is added
+ * @brief Prints the message digest to stdout
+ *
+ * - The message digest will be in hex form ([0-9][a-f])
+ * - No newline is added to stdout
+ * - For debug purposes
+ *
+ * @param md The message digest to print
  */
 
 void hash_show(const struct mdigest *md)
