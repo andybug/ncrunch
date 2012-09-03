@@ -4,7 +4,8 @@
 #include <openssl/sha.h>
 
 /**
- * Stores the message digests for hashing calls
+ * @struct mdigest
+ * @brief Stores the message digests for hashing calls
  */
 
 struct mdigest {
