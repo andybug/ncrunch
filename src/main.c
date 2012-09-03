@@ -1,4 +1,17 @@
 
+/**
+ * @file main.c
+ * @author Andrew Fields
+ *
+ * Entry point of the program. The arguments are processed and each step of the
+ * data translations are controlled from here.\n
+ *
+ * The basic flow is:\n
+ * arguments -> flatf -> algo -> database -> web
+ *
+ * @see main()
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -11,17 +24,13 @@
  * @struct switch_handler
  * @brief Maps a switch character (-x) to a function that handles it
  *
- * @var _switch
- * The character that is read from the command line ('a' for switch -a)
- *
- * @var takes_arg
- * True if the switch expects to receive the next argument as input
- * (-f file.txt)
- *
- * @var handler
- * The function that will be called when the switch is passed on the command line
- * If takes_arg is set, the next argument will be passed in as a string to the handler
- * (-f file.txt -> _f_switch_handler(str = file.txt))
+ * Fields:\n
+ * - _switch: The character that is read from the command line ('a' for switch -a)
+ * - takes_arg:True if the switch expects to receive the next argument as input
+ *   (-f file.txt)
+ * - handler: The function that will be called when the switch is passed on the
+ *   command line. If takes_arg is set, the next argument will be passed in as
+ *   a string to the handler. (-f file.txt -> _f_switch_handler(str = file.txt))
  */
 
 struct switch_handler {
@@ -36,7 +45,7 @@ static void _switch_version(const char *arg);
 static void _switch_flatf(const char *arg);
 
 /**
- * The list of argument handlers
+ * @brief The list of argument handlers
  *
  * This list maps each switch to its handler function
  */
@@ -49,7 +58,7 @@ static struct switch_handler handlers[] = {
 };
 
 /**
- * Set to the switch_handler that is currently expecting a param
+ * @brief Set to the switch_handler that is currently expecting a param
  *
  * If a switch handler has the takes_arg fields set and is called, the active_switch
  * variable will point to that handler so that the next argument from the command
@@ -59,7 +68,7 @@ static struct switch_handler handlers[] = {
 static struct switch_handler *active_switch = NULL;
 
 /**
- * The name of the flat file from the command line
+ * @brief The name of the flat file from the command line
  *
  * It can be set with either the -f flag or simply ncrunch [flatf]
  */
@@ -67,7 +76,7 @@ static struct switch_handler *active_switch = NULL;
 static const char *flatf_name = NULL;
 
 /**
- * Handles the version switch and exits
+ * @brief Handles the version switch and exits
  */
 
 static void _switch_version(const char *arg)
@@ -90,7 +99,7 @@ static void _switch_version(const char *arg)
 }
 
 /**
- * Handles the flatf name switch/default case
+ * @brief Handles the flatf name switch/default case
  */
 
 static void _switch_flatf(const char *arg)
@@ -99,7 +108,7 @@ static void _switch_flatf(const char *arg)
 }
 
 /**
- * Finds the handler that handles the switch given
+ * @brief Finds the handler that handles the switch given
  */
 
 static struct switch_handler *_find_handler(char _switch)
@@ -119,7 +128,7 @@ static struct switch_handler *_find_handler(char _switch)
 }
 
 /**
- * Handles a simple switch (-a)
+ * @brief Handles a simple switch (-a)
  *
  * Sets this switch to the active_switch if it expects an argument to follow,
  * otherwise the handler for the switch is called
@@ -141,7 +150,7 @@ static void _process_single_switch(const char *_switch)
 }
 
 /**
- * Handles a switch that has multiple flags (-abc)
+ * @brief Handles a switch that has multiple flags (-abc)
  *
  * Each switch in the chain is checked to ensure that they do not take an
  * argument, then the handler for each is called
@@ -170,7 +179,7 @@ static void _process_chained_switch(const char *_switch)
 }
 
 /**
- * Handles a data argument
+ * @brief Handles a data argument
  *
  * If there is an active switch (one that is waiting for a data argument), the
  * handler for the active switch is called with str for its data. Otherwise,
@@ -195,7 +204,7 @@ static void _process_non_switch(const char *str)
 }
 
 /**
- * Handles the processing of a switch from the command line (e.g. -x)
+ * @brief Handles the processing of a switch from the command line (e.g. -x)
  *
  * Determines whether the switch is chained (-abc) or single (-f), then calls
  * the functions that handle these types
@@ -230,7 +239,7 @@ static void _process_switch(const char *_switch)
 }
 
 /**
- * Handles the processing of flags and file names passed to the program
+ * @brief Handles the processing of flags and file names passed to the program
  *
  * First determines if each arg is a switch or non-switch, then calls the 
  * appropriate processing functions
@@ -256,7 +265,7 @@ static void _process_args(int argc, char **argv)
 }
 
 /**
- * Callback for the atexit() function, cleans up allocations
+ * @brief Callback for the atexit() function, cleans up allocations
  *
  * Only used in debug mode to make sure we aren't losing any allocations
  */
