@@ -80,6 +80,34 @@ static const char *_lua_read(lua_State * L, void *data, size_t * size)
 }
 
 /**
+ * @brief Compares the expected size of the Lua stack to its real size
+ *
+ * The function aborts the program if the expected size of the stack is different
+ * from the real since the implies a serious logical error in the program's
+ * design.
+ *
+ * @attention The program exits with an error if the stack check fails
+ * @param L The Lua state
+ * @param expected The expected size of the stack (# of entries)
+ * @return Returns 1 if the stack is ok, or aborts the program otherwise
+ */
+
+static int _check_stack(lua_State *L, int expected)
+{
+#ifndef NDEBUG
+	int top;
+
+	top = lua_gettop(L);
+	if (top != expected) {
+		fprintf(stderr, "%s: expected top of the stack to be %d, got %d instead\n",
+			__func__, expected, top);
+		exit(EXIT_FAILURE);
+	}
+#endif
+	return 1;
+}
+
+/**
  * @brief Pushes a team onto the Lua stack
  *
  * Adds a team onto the Lua stack to be used as an entry in the teams
@@ -186,14 +214,19 @@ int algo_exec(const char *script)
 		fprintf(stderr, "%s: could not parse '%s'\n", __func__, script);
 		return -3;
 	}
+	_check_stack(state, 1); /* script should be on the stack */
 
 	_push_teams(state);
+	_check_stack(state, 1); /* script, teams table should be global */
+
 	lua_call(state, 0, 1);
+	_check_stack(state, 1); /* the return val of the script */
 
 	ret = lua_tonumber(state, -1);
+	lua_pop(state, 1);
 	printf("Lua: %f\n", ret);
 
-	lua_pop(state, 1);
+	_check_stack(state, 0); /* there should be nothing */
 	lua_close(state);
 	close(algo_fd);
 	algo_fd = -1;
