@@ -127,7 +127,6 @@ static void _switch_algo(const char *arg)
 	algo_name = arg;
 }
 
-
 /**
  * @brief Finds the handler that handles the switch given
  */

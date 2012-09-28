@@ -325,7 +325,6 @@ int team_set_double(size_t id, size_t field, double val)
 	return 0;
 }
 
-
 /**
  * Returns the string value of the specified field
  *
